@@ -1,6 +1,6 @@
 from flask import (Flask, render_template, render_template_string,
-                   request, redirect, url_for, session, abort, jsonify)
-import requests, requests.adapters, ssl, time, json, threading, urllib3, traceback
+request, redirect, url_for, session, abort, jsonify)
+import requests, requests.adapters, ssl, time, json, threading, urllib3, traceback, os
 from functools import wraps
 from datetime import datetime, timedelta
 
@@ -35,17 +35,20 @@ LOGS_FILE   = "system_history.json"
 STAFF_FILE  = "staff_registry.json"
 BOT_API_KEY = "VOID_BOT_SECRET_2026"
 
-BOT_TOKEN            = "MTQ4NzQ2ODI1OTcwMjczOTEzNQ.GoPwyd.F9MyLJT-d3TRXneER5SwqfEVnVK0ElwjWTj9ck"
+# Sensitive credentials loaded from environment variables (set these in your hosting platform)
+BOT_TOKEN     = os.environ.get("BOT_TOKEN", "MTQ4NzQ2ODI1OTcwMjczOTEzNQ.Gr5PAn.1AFOjOKCZwdlWoZm9--z-UpB3_Wf5QrrL210j4")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "1n64oAOmAzEhN9haKrx8k88_k-UogatB")
+
 GUILD_ID             = "1341845115949420584"
 JOB_LOG_CHANNEL      = "1491731945015476254"
 INV_ACCEPTED_CHANNEL = "1342423579223920686"
 CLIENT_ID            = "1487468259702739135"
-CLIENT_SECRET        = "1n64oAOmAzEhN9haKrx8k88_k-UogatB"
 ROLE_ADMIN           = "1474517059143729234"
 ROLE_PROBATION       = "1474517059143729235"
 BOT_BRIDGE_URL       = "http://127.0.0.1:6000/post-review"
 
-OAUTH_REDIRECT_URI   = "https://voids-craft-studio.vercel.app/"
+# Fixed: redirect URI now matches the OAuth link exactly (no trailing slash)
+OAUTH_REDIRECT_URI   = "https://voids-craft-studio.vercel.app"
 OAUTH_SCOPES         = "identify gdm.join guilds messages.read rpc.video.read rpc activities.write rpc.voice.read guilds.channels.read guilds.join connections"
 
 DEPT_TO_ROLE = {
@@ -89,12 +92,8 @@ ALL_DEPTS = [
     ("qa","QA","#22d3a0"),
 ]
 
-# Maps each manager folder to the page that hosts the job form.
-# Only folders that actually have ops.html should be in OPS_FOLDERS.
 OPS_FOLDERS = ('marketing_manager', 'support_manager', 'qa_manager', 'ia_manager')
 
-# Per-folder overrides: folder -> page name (without .html).
-# If a folder is not listed here, the default logic below applies.
 _JOB_PAGE_MAP = {
     'development_manager': 'broadcasts',
     'sales_manager':       'job-creator',
@@ -117,11 +116,6 @@ def get_manager_ann_page(folder):
         return 'ops'
     return 'broadcasts'
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIX 1: SECURITY JS — removed RAF blackout loop that caused black/white flash.
-# Kept: right-click block, keyboard shortcuts, tab-blur shield, devtools heuristic,
-# canvas poisoning, drag/select prevention, watermark text.
-# ─────────────────────────────────────────────────────────────────────────────
 SECURITY_JS = """
 <style id="void-sec">
 * {
@@ -183,7 +177,6 @@ body::after {
 
   var shield = document.getElementById('void-blur-shield');
 
-  /* ── 1. Tab blur / visibility shield ───────────────────────────────── */
   function showShield() {
     if (shield) shield.classList.add('active');
   }
@@ -197,7 +190,6 @@ body::after {
   window.addEventListener('blur',  showShield);
   window.addEventListener('focus', hideShield);
 
-  /* ── 2. Keyboard shortcuts ─────────────────────────────────────────── */
   document.addEventListener('keydown', function(e) {
     var k = e.key, ct = e.ctrlKey, sh = e.shiftKey, mt = e.metaKey, alt = e.altKey;
     if (k === 'PrintScreen' || k === 'Print Screen') {
@@ -215,12 +207,10 @@ body::after {
     }
   }, true);
 
-  /* ── 3. Right-click / drag / selection prevention ──────────────────── */
   document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
   document.addEventListener('dragstart',   function(e) { e.preventDefault(); });
   document.addEventListener('selectstart', function(e) { e.preventDefault(); });
 
-  /* ── 4. DevTools size heuristic ────────────────────────────────────── */
   var _devOpen = false;
   setInterval(function() {
     var wD = window.outerWidth  - window.innerWidth;
@@ -230,7 +220,6 @@ body::after {
     if (!open &&  _devOpen) { _devOpen = false; hideShield(); }
   }, 700);
 
-  /* ── 5. Canvas fingerprint poisoning ───────────────────────────────── */
   try {
     var origToDataURL = HTMLCanvasElement.prototype.toDataURL;
     HTMLCanvasElement.prototype.toDataURL = function(type) {
@@ -256,9 +245,6 @@ body::after {
 })();
 </script>"""
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CHOOSER HTML (unchanged)
-# ─────────────────────────────────────────────────────────────────────────────
 CHOOSER_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -726,11 +712,6 @@ def normalize_log_type(t):
     return t
 
 def filter_by_dept(items, view_dept, is_admin):
-    """Return items visible to view_dept.
-    view_dept must be a base dept key e.g. 'sales', 'marketing'.
-    Items with dept_key='all' are shown to everyone.
-    Items with a specific dept_key are ONLY shown to that exact dept.
-    """
     if is_admin:
         return items
     return [i for i in items
@@ -744,10 +725,6 @@ def build_template_vars(uid,user_dept,is_admin,manager_base_dept=None):
         return [l for l in logs if str(l.get('user_id',''))==str(uid)]
     all_logs=accepted_logs+pending_logs+denied_logs
 
-    # Resolve filter_dept to a base dept key (e.g. 'sales', 'marketing').
-    # manager_base_dept is already correct when provided.
-    # user_dept for staff portals = URL dept = correct base key.
-    # user_dept for manager sessions = 'sales_manager' etc — strip suffix.
     if manager_base_dept:
         filter_dept = manager_base_dept
     elif user_dept and user_dept.endswith('_manager'):
@@ -1112,12 +1089,10 @@ def serve_manager_portal(folder, page):
 def create_job():
     if session.get('role') not in ('admin','manager'): abort(403)
     dk=request.form.get('department_id','').strip()
-    # Normalize: managers may only post to their own base dept or 'all'.
-    # If the form sends a manager-folder name, convert to base dept.
     if session.get('role') == 'manager':
         base = session.get('manager_base_dept','')
         if dk not in ('all',) and dk not in [d for d,_,_ in ALL_DEPTS]:
-            dk = base  # fall back to their base dept
+            dk = base
     dn=format_dept(dk)
     job={"id":int(time.time()),"title":request.form.get('title','').strip(),
          "content":request.form.get('content','').strip(),"deadline":request.form.get('deadline','').strip(),
@@ -1133,8 +1108,6 @@ def create_job():
         "timestamp":datetime.utcnow().isoformat()})
     if session.get('role') == 'admin':
         return redirect('/portal/admin/job-creator')
-    # Get folder from form (hidden field) or fall back to session.
-    # Validate it belongs to this manager before using.
     folder = request.form.get('manager_folder','').strip()
     allowed = get_allowed_manager_folders()
     if not folder or folder not in allowed:
@@ -1143,7 +1116,6 @@ def create_job():
         folder = allowed[0] if allowed else ''
     if folder:
         session['manager_folder'] = folder
-        # also keep manager_base_dept in sync
         for cfg in MANAGER_ROLE_MAP.values():
             if cfg['folder'] == folder:
                 session['manager_base_dept'] = cfg['base_dept']
@@ -1157,12 +1129,10 @@ def create_job():
 def create_announcement():
     if session.get('role') not in ('admin','manager'): abort(403)
     dk=request.form.get('department_id','').strip()
-    # Normalize: managers may only post to their own base dept or 'all'.
-    # If the form sends a manager-folder name, convert to base dept.
     if session.get('role') == 'manager':
         base = session.get('manager_base_dept','')
         if dk not in ('all',) and dk not in [d for d,_,_ in ALL_DEPTS]:
-            dk = base  # fall back to their base dept
+            dk = base
     dn=format_dept(dk)
     ann={"id":int(time.time()),"title":request.form.get('title','').strip(),
          "content":request.form.get('content','').strip(),"dept_key":dk,"dept_name":dn,
@@ -1176,8 +1146,6 @@ def create_announcement():
         "timestamp":datetime.utcnow().isoformat()})
     if session.get('role') == 'admin':
         return redirect('/portal/admin/broadcasts')
-    # Get folder from form (hidden field) or fall back to session.
-    # Validate it belongs to this manager before using.
     folder = request.form.get('manager_folder','').strip()
     allowed = get_allowed_manager_folders()
     if not folder or folder not in allowed:
@@ -1367,4 +1335,4 @@ def serve_portal(dept,page):
         ), 500
 
 if __name__=='__main__':
-    app.run(debug=False, port=5000)
+    app.run(debug=False, port=50000)
