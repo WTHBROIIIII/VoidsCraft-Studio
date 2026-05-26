@@ -1,0 +1,282 @@
+{% extends "components/base.html" %}
+{% set page = 'staff-manager' %}
+
+{% block title %}Staff Manager{% endblock %}
+{% block page_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>{% endblock %}
+{% block page_title %}Staff Manager{% endblock %}
+{% block breadcrumb %}STAFF MANAGER{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filters input[type="text"], .filters select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 7px 12px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-main);
+    outline: none;
+  }
+  .filters input[type="text"]:focus, .filters select:focus { border-color: var(--accent); }
+  .filters select option { background: var(--bg-card); }
+  .filters input[type="text"] { width: 220px; }
+  .staff-pfp {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-accent);
+  }
+  .staff-pfp-placeholder {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .uid-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .action-form { display: inline; }
+  .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+  /* Terminate button — deep red */
+  .btn-terminate {
+    background: rgba(180, 28, 28, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.45);
+    color: #f87171;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s, border-color 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-terminate:hover {
+    background: rgba(220, 38, 38, 0.28);
+    border-color: rgba(248, 113, 113, 0.7);
+  }
+
+  /* Revoke button — cyan/teal accent */
+  .btn-revoke {
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.40);
+    color: #67e8f9;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s, border-color 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-revoke:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: rgba(103, 232, 249, 0.7);
+  }
+
+  /* Status badges */
+  .badge-terminated {
+    background: rgba(180, 28, 28, 0.18);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    color: #f87171;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .badge-terminated::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #f87171;
+    display: inline-block;
+  }
+
+  /* Dim terminated rows slightly */
+  tr.row-terminated td { opacity: 0.65; }
+  tr.row-terminated td:last-child { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+      All Staff Members
+    </div>
+    <span class="badge blue">{{ staff_list|length if staff_list is defined else 0 }} members</span>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Search by name or ID..." oninput="filterTable()"/>
+    <select id="deptFilter" onchange="filterTable()">
+      <option value="">All Departments</option>
+      <option value="investigation">Investigation</option>
+      <option value="sales">Sales</option>
+      <option value="marketing">Marketing</option>
+      <option value="support">Support</option>
+      <option value="development">Development</option>
+      <option value="moderation">Moderation</option>
+      <option value="admin">Admin</option>
+    </select>
+    <select id="statusFilter" onchange="filterTable()">
+      <option value="">All Statuses</option>
+      <option value="active">Active</option>
+      <option value="terminated">Terminated</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table id="staffTable">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Discord ID</th>
+          <th>Department</th>
+          <th>Last Login</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if staff_list is defined and staff_list %}
+          {% for member in staff_list %}
+          {% set is_terminated = member.get('terminated', False) if member is mapping else false %}
+          {% set is_active = member.get('active', True) if member is mapping else true %}
+          <tr
+            data-dept="{{ member.dept or '' }}"
+            data-name="{{ member.username or '' }}"
+            data-uid="{{ member.uid or '' }}"
+            data-status="{% if is_terminated %}terminated{% elif not is_active %}inactive{% else %}active{% endif %}"
+            class="{% if is_terminated %}row-terminated{% endif %}"
+          >
+            <td class="primary">
+              <div style="display:flex;align-items:center;gap:10px">
+                {% if member.pfp %}
+                  <img src="{{ member.pfp }}" class="staff-pfp" alt="pfp"/>
+                {% else %}
+                  <div class="staff-pfp-placeholder">{{ (member.username or 'U')[0].upper() }}</div>
+                {% endif %}
+                <span>{{ member.username or 'Unknown' }}</span>
+              </div>
+            </td>
+            <td><span class="uid-text">{{ member.uid or '—' }}</span></td>
+            <td>
+              <span class="badge {% if member.dept == 'admin' %}blue{% elif member.dept == 'sales' %}green{% elif member.dept == 'marketing' %}amber{% elif member.dept == 'investigation' %}purple{% elif member.dept == 'moderation' %}red{% else %}amber{% endif %}">
+                <span class="badge-dot"></span>{{ (member.dept or 'unknown').upper() }}
+              </span>
+            </td>
+            <td class="mono" style="font-size:11px;color:var(--text-muted)">{{ member.last_login or '—' }}</td>
+            <td>
+              {% if is_terminated %}
+                <span class="badge-terminated">TERMINATED</span>
+              {% elif not is_active %}
+                <span class="badge red"><span class="badge-dot"></span>Inactive</span>
+              {% else %}
+                <span class="badge green"><span class="badge-dot"></span>Active</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="actions-cell">
+                {% if is_terminated %}
+                  <!-- Only show Revoke when terminated -->
+                  <form action="/portal/admin/revoke-staff/{{ member.uid }}" method="POST" class="action-form"
+                    onsubmit="return confirm('Revoke termination for {{ member.username }}?\n\nThis will restore their portal access and unban them from the Discord server.')">
+                    <button type="submit" class="btn-revoke">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                      Revoke
+                    </button>
+                  </form>
+                {% else %}
+                  <!-- Kick: portal only, no Discord ban -->
+                  {% if is_active %}
+                  <form action="/portal/admin/kick-staff/{{ member.uid }}" method="POST" class="action-form"
+                    onsubmit="return confirm('Kick {{ member.username }} from the portal?\n\nThis removes portal access only. Use Terminate to also ban from Discord.')">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      Kick
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  <!-- Terminate: portal ban + Discord server ban -->
+                  <form action="/portal/admin/terminate-staff/{{ member.uid }}" method="POST" class="action-form"
+                    onsubmit="return confirm('⚠️ TERMINATE {{ member.username }}?\n\nThis will:\n• Permanently block portal access\n• BAN them from the Discord server\n\nThis action can be revoked later.')">
+                    <button type="submit" class="btn-terminate">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                      Terminate
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+              <p>No staff members have logged in yet</p>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const dept   = document.getElementById('deptFilter').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value.toLowerCase();
+  const rows   = document.querySelectorAll('#staffTable tbody tr[data-dept]');
+  rows.forEach(row => {
+    const name     = (row.dataset.name   || '').toLowerCase();
+    const uid      = (row.dataset.uid    || '').toLowerCase();
+    const rowDept  = (row.dataset.dept   || '').toLowerCase();
+    const rowStatus= (row.dataset.status || '').toLowerCase();
+    const matchSearch = !search || name.includes(search) || uid.includes(search);
+    const matchDept   = !dept   || rowDept  === dept;
+    const matchStatus = !status || rowStatus === status;
+    row.style.display = matchSearch && matchDept && matchStatus ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

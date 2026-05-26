@@ -1,0 +1,166 @@
+{% extends "development/base_development.html" %}
+{% block title %}Chain of Command{% endblock %}
+{% block tab_chain %}active{% endblock %}
+
+{% block head %}
+<style>
+.coc-wrap{max-width:780px;margin:0 auto}
+.tree{display:flex;flex-direction:column;align-items:center}
+.connector{width:2px;height:26px;background:var(--border2)}
+.node-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:15px 18px;width:100%;max-width:480px;display:flex;align-items:center;gap:14px;position:relative;transition:border-color .15s,transform .15s}
+.node-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.node-icon{width:40px;height:40px;border-radius:var(--r);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.node-icon svg{width:19px;height:19px}
+.node-role{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px}
+.node-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px}
+.node-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.badge-abs{position:absolute;top:12px;right:14px}
+.split-cross{width:100%;max-width:720px;position:relative;height:26px;display:flex;justify-content:center}
+.split-cross::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:26px;background:var(--border2)}
+.split-cross::after{content:'';position:absolute;top:25px;left:25%;right:25%;height:2px;background:var(--border2)}
+.split-row{display:flex;gap:14px;width:100%;max-width:720px}
+.split-row .node-card{max-width:none;flex:1}
+.prob-section{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.3);border-radius:var(--r2);padding:20px;margin-top:24px}
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.prob-item{background:rgba(0,0,0,.15);border:1px solid rgba(245,166,35,.15);border-radius:var(--r);padding:11px}
+.prob-item-label{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px}
+.prob-item-val{font-size:13px;font-weight:600;color:var(--amber)}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+<div class="welcome">
+  <h1>Chain of Command</h1>
+  <p>Development department hierarchy. Always follow this structure for assistance or escalations.</p>
+</div>
+
+<div class="coc-wrap">
+  <div class="tree">
+
+    <!-- CEO -->
+    <div class="node-card" style="border-color:rgba(167,139,250,.4);background:linear-gradient(135deg,var(--card) 0%,rgba(167,139,250,.06) 100%)">
+      <div class="node-icon" style="background:var(--accent-dim)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><circle cx="12" cy="8" r="5"/><path d="M3 21v-2a7 7 0 0114 0v2"/></svg>
+      </div>
+      <div>
+        <div class="node-role">Tier 1 · Executive</div>
+        <div class="node-title">Chief Executive Officer</div>
+        <div class="node-desc">Final authority across all departments and studio operations.</div>
+      </div>
+      <div class="badge-abs"><span class="badge accent"><span class="badge-dot"></span>CEO</span></div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- SECRETARY -->
+    <div class="node-card" style="border-color:rgba(167,139,250,.25)">
+      <div class="node-icon" style="background:var(--purple-dim)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div>
+        <div class="node-role">Tier 2 · Executive Support</div>
+        <div class="node-title">Secretary</div>
+        <div class="node-desc">Manages executive communications and administrative coordination.</div>
+      </div>
+      <div class="badge-abs"><span class="badge purple"><span class="badge-dot"></span>Secretary</span></div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- OPS MANAGER -->
+    <div class="node-card" style="border-color:rgba(79,142,247,.25)">
+      <div class="node-icon" style="background:var(--blue-dim)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/></svg>
+      </div>
+      <div>
+        <div class="node-role">Tier 3 · Management</div>
+        <div class="node-title">Operations Manager</div>
+        <div class="node-desc">Bridges executive leadership and department management. Cross-department oversight.</div>
+      </div>
+      <div class="badge-abs"><span class="badge blue"><span class="badge-dot"></span>Ops Mgr</span></div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- LEAD DEVELOPER -->
+    <div class="node-card" style="border-color:rgba(167,139,250,.35)">
+      <div class="node-icon" style="background:var(--accent-dim)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div>
+        <div class="node-role">Tier 4 · Department Lead · 75% + Base 275R$/mo</div>
+        <div class="node-title">Lead Developer</div>
+        <div class="node-desc">Heads the Development team. Assigns commissions, reviews task jobs, manages deadlines, and delivers final products to HICOM. Earns 75% commission + monthly base pay.</div>
+      </div>
+      <div class="badge-abs"><span class="badge accent"><span class="badge-dot"></span>Lead Dev</span></div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- SENIOR DEVELOPER -->
+    <div class="node-card" style="border-color:rgba(79,142,247,.25)">
+      <div class="node-icon" style="background:var(--blue-dim)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><circle cx="12" cy="12" r="2"/></svg>
+      </div>
+      <div>
+        <div class="node-role">Tier 5 · Senior · 75% commission</div>
+        <div class="node-title">Senior Developer</div>
+        <div class="node-desc">Handles complex commissions and advanced task jobs. Mentors junior devs. Earns 75% of final price.</div>
+      </div>
+      <div class="badge-abs"><span class="badge blue"><span class="badge-dot"></span>Senior Dev</span></div>
+    </div>
+
+    <!-- SPLIT: Developer + Junior Developer -->
+    <div class="split-cross"></div>
+
+    <div class="split-row">
+      <div class="node-card" style="border-color:rgba(139,147,168,.2)">
+        <div class="node-icon" style="background:rgba(139,147,168,.1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div>
+          <div class="node-role">Tier 6 · Dev · 70% commission</div>
+          <div class="node-title">Developer</div>
+          <div class="node-desc">Core developers. Handle standard commissions and task jobs independently. 70% of final price.</div>
+        </div>
+        <span class="badge" style="position:absolute;top:12px;right:12px;background:rgba(139,147,168,.12);color:var(--text2)"><span class="badge-dot"></span>Dev</span>
+      </div>
+
+      <div class="node-card" style="border-color:rgba(139,147,168,.1)">
+        <div class="node-icon" style="background:rgba(139,147,168,.07)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div>
+          <div class="node-role">Tier 7 · Junior · 65% commission</div>
+          <div class="node-title">Junior Developer</div>
+          <div class="node-desc">Entry level. Building skills and completing quota tasks. 65% of final price.</div>
+        </div>
+        <span class="badge" style="position:absolute;top:12px;right:12px;background:rgba(139,147,168,.08);color:var(--text3)"><span class="badge-dot"></span>Junior Dev</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PROBATION -->
+  <div class="prob-section">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <svg style="width:20px;height:20px;color:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div style="font-size:15px;font-weight:700;color:var(--amber)">Probation Period</div>
+      {% if prob %}<span class="badge amber" style="margin-left:auto"><span class="badge-dot"></span>You are on probation</span>{% endif %}
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">All developers start on probation. Commission % and base pay are 30% reduced until probation is lifted by Lead Developer or above.</div>
+    <div class="prob-grid">
+      <div class="prob-item"><div class="prob-item-label">Commission Reduction</div><div class="prob-item-val">−30% of standard %</div></div>
+      <div class="prob-item"><div class="prob-item-label">Base Pay (Mgmt)</div><div class="prob-item-val">275R$ → 192.5R$</div></div>
+      <div class="prob-item"><div class="prob-item-label">Discord Role ID</div><div class="prob-item-val mono" style="font-size:11px">1462115983484522557</div></div>
+      <div class="prob-item"><div class="prob-item-label">Removal By</div><div class="prob-item-val">Lead Developer+</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7;border-top:1px solid rgba(245,166,35,.15);padding-top:10px">
+      • All commission percentages are <strong style="color:var(--amber)">30% reduced</strong> during probation (e.g. 65% → 45.5%).<br>
+      • Probation Discord role (ID: 1462115983484522557) is auto-assigned on hire and removed by Lead Dev+.<br>
+      • Contact <strong style="color:var(--text)">Lead Developer or Development Management</strong> to review your status.
+    </div>
+  </div>
+</div>
+{% endblock %}

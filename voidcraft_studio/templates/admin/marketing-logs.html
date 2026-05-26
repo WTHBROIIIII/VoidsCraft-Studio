@@ -1,0 +1,182 @@
+{% extends "components/base.html" %}
+{% set page = 'marketing-logs' %}
+{% block title %}Marketing Logs{% endblock %}
+{% block page_icon %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>{% endblock %}
+{% block page_title %}Marketing Logs{% endblock %}
+{% block breadcrumb %}MARKETING LOGS{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .top-row{display:grid;grid-template-columns:1fr 300px;gap:20px}
+  .chart-block{height:200px;position:relative}
+  .proof-link{color:var(--accent);font-size:11px;font-family:var(--font-mono);text-decoration:none}
+  .proof-link:hover{text-decoration:underline}
+  .tab-bar{display:flex;gap:4px;margin-bottom:16px}
+  .tab-btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:var(--font-main);transition:all 0.15s}
+  .tab-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .ctrl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ctrl-row select,.ctrl-row input{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text-primary);font-size:12px;font-family:var(--font-main);outline:none}
+  .ctrl-row input{width:160px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set all_giv  = giveaway_logs %}
+{% set acc_giv  = accepted_giveaway %}
+{% set pend_giv = pending_logs | selectattr('type','equalto','Giveaway') | list %}
+{% set den_giv  = denied_logs  | selectattr('type','equalto','Giveaway') | list %}
+
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-card purple"><div class="stat-label">Total Giveaway Logs</div><div class="stat-value">{{ all_giv|length }}</div><div class="stat-sub">All time</div></div>
+  <div class="stat-card green"><div class="stat-label">Accepted</div><div class="stat-value">{{ acc_giv|length }}</div><div class="stat-sub">Approved</div></div>
+  <div class="stat-card amber"><div class="stat-label">Pending</div><div class="stat-value">{{ pend_giv|length }}</div><div class="stat-sub">Awaiting review</div></div>
+  <div class="stat-card red"><div class="stat-label">Denied</div><div class="stat-value">{{ den_giv|length }}</div><div class="stat-sub">Rejected</div></div>
+</div>
+
+<div class="top-row">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Giveaway Records
+      </div>
+      <div class="ctrl-row">
+        <select id="gMonth" onchange="gFilter()">
+          <option value="">All Time</option>
+          <option value="2026-01">Jan 2026</option>
+          <option value="2026-02">Feb 2026</option>
+          <option value="2026-03">Mar 2026</option>
+          <option value="2026-04">Apr 2026</option>
+          <option value="2026-05">May 2026</option>
+          <option value="2026-06">Jun 2026</option>
+        </select>
+        <input type="text" id="gSearch" placeholder="Search..." oninput="gFilter()"/>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="gSwitch('all',this)">All</button>
+      <button class="tab-btn" onclick="gSwitch('Accepted',this)">Accepted</button>
+      <button class="tab-btn" onclick="gSwitch('Pending',this)">Pending</button>
+      <button class="tab-btn" onclick="gSwitch('Denied',this)">Denied</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="givTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Staff</th>
+            <th>Server</th>
+            <th>Their Ping</th>
+            <th>Our Ping</th>
+            <th>Proof</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in all_giv %}
+          <tr data-status="{{ log.status }}" data-ts="{{ log.timestamp }}" data-user="{{ log.username }}">
+            <td class="mono" style="font-size:10px;color:var(--text-muted)">{{ log.id }}</td>
+            <td class="primary">{{ log.username or '—' }}</td>
+            <td>{{ (log.details.server if log.details is mapping else '—') or '—' }}</td>
+            <td>{{ (log.details.their_ping if log.details is mapping else '—') or '—' }}</td>
+            <td>{{ (log.details.our_ping if log.details is mapping else '—') or '—' }}</td>
+            <td>
+              {% if log.proof %}
+                <a href="{{ log.proof }}" target="_blank" class="proof-link">View ↗</a>
+              {% else %}
+                <span style="color:var(--text-muted)">—</span>
+              {% endif %}
+            </td>
+            <td class="mono" style="font-size:11px;color:var(--text-muted)">{{ log.timestamp or '—' }}</td>
+            <td>
+              <span class="badge {% if log.status=='Accepted' %}accepted{% elif log.status=='Denied' %}denied{% else %}pending{% endif %}">
+                <span class="badge-dot"></span>{{ log.status or 'Pending' }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8">
+              <div class="empty-state"><p>No giveaway logs yet</p></div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT: Chart + quick stats (giveaway only) -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        Status Overview
+      </div>
+    </div>
+    <div class="chart-block"><canvas id="givPie"></canvas></div>
+    <hr class="divider"/>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+        <span style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Accepted
+        </span>
+        <span class="mono" style="color:var(--green)">{{ acc_giv|length }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+        <span style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--amber);display:inline-block"></span>Pending
+        </span>
+        <span class="mono" style="color:var(--amber)">{{ pend_giv|length }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+        <span style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block"></span>Denied
+        </span>
+        <span class="mono" style="color:var(--red)">{{ den_giv|length }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+new Chart(document.getElementById('givPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Accepted','Pending','Denied'],
+    datasets: [{
+      data: [{{ acc_giv|length }}, {{ pend_giv|length }}, {{ den_giv|length }}],
+      backgroundColor: ['rgba(34,211,160,0.25)','rgba(245,166,35,0.25)','rgba(240,90,90,0.25)'],
+      borderColor: ['#22d3a0','#f5a623','#f05a5a'],
+      borderWidth: 1.5
+    }]
+  },
+  options: { cutout:'60%', maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
+});
+
+function gSwitch(s, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  gFilter(s);
+}
+
+function gFilter(fs) {
+  const m = document.getElementById('gMonth').value;
+  const q = (document.getElementById('gSearch').value || '').toLowerCase();
+  const a = document.querySelector('.tab-btn.active');
+  const s = fs !== undefined ? fs : (a ? a.textContent.trim() : 'all');
+  document.querySelectorAll('#givTable tbody tr[data-status]').forEach(r => {
+    const mM = !m || (r.dataset.ts || '').startsWith(m);
+    const mS = s === 'all' || (r.dataset.status || '') === s;
+    const mU = !q || (r.dataset.user || '').toLowerCase().includes(q);
+    r.style.display = mM && mS && mU ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

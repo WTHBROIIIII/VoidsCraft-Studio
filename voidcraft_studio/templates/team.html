@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VoidCraft Studio — Team</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#080a0f;--panel:#0d1117;--card:#111620;--card2:#161b26;--border:#1e2535;--border2:#2a3347;--accent:#4f8ef7;--accent-dim:rgba(79,142,247,0.15);--green:#22d3a0;--green-dim:rgba(34,211,160,0.12);--amber:#f5a623;--amber-dim:rgba(245,166,35,0.12);--red:#f05a5a;--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);--text:#e8ecf4;--text2:#7a8499;--text3:#3a4258;--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;--r:8px;--r2:12px;--r3:16px}
+[data-theme="light"]{--bg:#f0f2f7;--panel:#fff;--card:#f7f8fc;--card2:#eef0f6;--border:#dde0ec;--border2:#c8ccd8;--text:#1a1d2e;--text2:#5a5f7a;--text3:#9095b0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.navbar{height:56px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:20px;flex-shrink:0}
+.nav-logo{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff}
+.nav-brand-name{font-size:14px;font-weight:700;color:var(--text)}
+.nav-brand-sub{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1}
+.nav-link{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r);text-decoration:none;font-size:13px;color:var(--text2);border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.nav-link:hover{background:var(--card);color:var(--text);border-color:var(--border)}
+.nav-link.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-dim)}
+.nav-link svg{width:14px;height:14px;flex-shrink:0}
+.nav-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.theme-btn{width:32px;height:32px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s}
+.theme-btn:hover{border-color:var(--border2);color:var(--text)}
+.theme-btn svg{width:16px;height:16px}
+.login-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#5865f2;color:#fff;border-radius:var(--r);font-size:13px;font-weight:500;text-decoration:none;transition:background .15s;white-space:nowrap}
+.login-btn:hover{background:#4752c4}
+.login-btn svg{width:14px;height:14px}
+.hero{text-align:center;padding:64px 28px 48px;max-width:680px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:var(--accent-dim);border:1px solid rgba(79,142,247,.3);border-radius:20px;font-size:11px;font-family:var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px}
+.hero-badge svg{width:12px;height:12px}
+.hero h1{font-size:36px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:-.5px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:14px;color:var(--text2);line-height:1.7}
+.page{max-width:1100px;margin:0 auto;padding:0 28px 60px}
+.section-label{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-label::before{content:'';width:20px;height:1px;background:var(--border2)}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* CEO row — 2 equal cards, centred */
+.ceo-row{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:16px;justify-content:center;margin-bottom:16px}
+/* Secretary + OM row — 2 equal cards, centred, same width as CEO row */
+.sec-om-row{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:16px;justify-content:center;margin-bottom:40px}
+@media(max-width:600px){
+  .ceo-row,.sec-om-row{grid-template-columns:1fr}
+}
+
+.mgr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:40px}
+.member-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:border-color .15s,transform .15s;position:relative;overflow:hidden}
+.member-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.member-card.exec{border-color:rgba(79,142,247,.25);background:linear-gradient(135deg,var(--card) 0%,rgba(79,142,247,.04) 100%)}
+.member-card.exec:hover{border-color:var(--accent)}
+.member-card.exec::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.member-pfp{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border2);margin-bottom:12px;background:var(--card2)}
+.member-pfp.exec{border-color:var(--accent);box-shadow:0 0 16px rgba(79,142,247,.2)}
+.member-pfp-ph{width:72px;height:72px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--accent);margin-bottom:12px}
+.member-pfp-ph.vacant{background:var(--card2);border-color:var(--border);color:var(--text3)}
+.member-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.member-name.vacant{color:var(--text3);font-style:italic}
+.member-role-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.member-uid{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.rb-ceo{background:linear-gradient(135deg,rgba(79,142,247,.2),rgba(167,139,250,.15));color:var(--accent);border:1px solid rgba(79,142,247,.3)}
+.rb-secretary{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.rb-om{background:rgba(79,142,247,.12);color:#4f8ef7;border:1px solid rgba(79,142,247,.2)}
+.rb-sales{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,211,160,.2)}
+.rb-marketing{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,.2)}
+.rb-dev{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.rb-support{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.rb-qa{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.2)}
+.rb-ia{background:rgba(79,142,247,.1);color:#4f8ef7;border:1px solid rgba(79,142,247,.15)}
+.rb-vacant{background:rgba(74,81,104,.15);color:var(--text3);border:1px solid var(--border)}
+.team-footer{text-align:center;padding:32px;border-top:1px solid var(--border);margin-top:20px}
+.team-footer p{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em}
+.dev-credit{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:6px}
+.dev-credit span{color:var(--accent)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-left">
+    <div class="nav-logo">VC</div>
+    <div style="line-height:1.2">
+      <div class="nav-brand-name">VoidCraft Studio</div>
+      <div class="nav-brand-sub">Staff Portal</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="/" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Home</a>
+    <a href="/team" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Team Members</a>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle light/dark mode">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <a href="https://discord.com/api/oauth2/authorize?client_id=1487468259702739135&redirect_uri=http%3A%2F%2F127.0.0.1%3A5000%2Fcallback&response_type=code&scope=identify%20guilds.members.read" class="login-btn"><svg viewBox="0 0 71 55" fill="currentColor"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528z"/></svg> Staff Login</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Our Team</div>
+  <h1>Meet <span>VoidCraft Studio</span></h1>
+  <p>The team behind VoidCraft Studio — from executive leadership to every department manager keeping operations running smoothly.</p>
+</div>
+
+<div class="page">
+
+  <!-- EXECUTIVE LEADERSHIP -->
+  <div class="section-label">Executive Leadership</div>
+
+  {# ── ROW 1: one card per CEO, always side by side ── #}
+  {% set ceo      = members.get('CEO', {}) %}
+  {% set ceo_list = ceo.get('all_ceos', []) %}
+
+  <div class="ceo-row">
+    {% if ceo_list %}
+      {% for c in ceo_list %}
+      <div class="member-card exec">
+        {% if c.pfp %}
+          <img src="{{ c.pfp }}" class="member-pfp exec" alt="CEO"/>
+        {% else %}
+          <div class="member-pfp-ph">{{ c.username[0].upper() }}</div>
+        {% endif %}
+        <div class="member-name">{{ c.username }}</div>
+        <div class="member-role-badge rb-ceo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Chief Executive Officer
+        </div>
+        {% if c.uid %}<div class="member-uid">ID: {{ c.uid }}</div>{% endif %}
+      </div>
+      {% endfor %}
+
+    {% elif ceo.username and ceo.username != 'Vacant' %}
+      <div class="member-card exec">
+        {% if ceo.pfp %}
+          <img src="{{ ceo.pfp }}" class="member-pfp exec" alt="CEO"/>
+        {% else %}
+          <div class="member-pfp-ph">{{ ceo.username[0].upper() }}</div>
+        {% endif %}
+        <div class="member-name">{{ ceo.username }}</div>
+        <div class="member-role-badge rb-ceo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Chief Executive Officer
+        </div>
+        {% if ceo.uid %}<div class="member-uid">ID: {{ ceo.uid }}</div>{% endif %}
+      </div>
+
+    {% else %}
+      <div class="member-card exec">
+        <div class="member-pfp-ph vacant">?</div>
+        <div class="member-name vacant">Vacant</div>
+        <div class="member-role-badge rb-ceo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Chief Executive Officer
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── ROW 2: Secretary + Operations Manager side by side ── #}
+  {% set sec = members.get('Secretary', {}) %}
+  {% set om  = members.get('OM', {}) %}
+
+  <div class="sec-om-row">
+
+    <div class="member-card exec">
+      {% if sec.pfp %}
+        <img src="{{ sec.pfp }}" class="member-pfp exec" alt="Secretary"/>
+      {% else %}
+        <div class="member-pfp-ph {% if not sec.username or sec.username == 'Vacant' %}vacant{% endif %}">
+          {% if sec.username and sec.username != 'Vacant' %}{{ sec.username[0].upper() }}{% else %}?{% endif %}
+        </div>
+      {% endif %}
+      <div class="member-name {% if not sec.username or sec.username == 'Vacant' %}vacant{% endif %}">{{ sec.username or 'Vacant' }}</div>
+      <div class="member-role-badge rb-secretary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+        Secretary
+      </div>
+      {% if sec.uid %}<div class="member-uid">ID: {{ sec.uid }}</div>{% endif %}
+    </div>
+
+    <div class="member-card exec">
+      {% if om.pfp %}
+        <img src="{{ om.pfp }}" class="member-pfp exec" alt="Operations Manager"/>
+      {% else %}
+        <div class="member-pfp-ph {% if not om.username or om.username == 'Vacant' %}vacant{% endif %}">
+          {% if om.username and om.username != 'Vacant' %}{{ om.username[0].upper() }}{% else %}?{% endif %}
+        </div>
+      {% endif %}
+      <div class="member-name {% if not om.username or om.username == 'Vacant' %}vacant{% endif %}">{{ om.username or 'Vacant' }}</div>
+      <div class="member-role-badge rb-om">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/></svg>
+        Operations Manager
+      </div>
+      {% if om.uid %}<div class="member-uid">ID: {{ om.uid }}</div>{% endif %}
+    </div>
+
+  </div>
+
+  <!-- DEPARTMENT MANAGEMENT -->
+  <div class="section-label">Department Management</div>
+  <div class="mgr-grid">
+
+    {% set dept_managers = [
+      ('Sales Manager',             members.get('Sales Manager',{}),            'rb-sales',   'Sales'),
+      ('Marketing Manager',         members.get('Marketing Manager',{}),        'rb-marketing','Marketing'),
+      ('Development Management',    members.get('Development Management',{}),   'rb-dev',     'Development'),
+      ('Customer Support Manager',  members.get('Customer Support Manager',{}), 'rb-support', 'Support'),
+      ('QA Manager',                members.get('QA Manager',{}),               'rb-qa',      'Quality Assurance'),
+      ('Internal Affairs Manager',  members.get('Internal Affairs Manager',{}), 'rb-ia',      'Internal Affairs'),
+    ] %}
+
+    {% for title, mgr, rbc, dept_label in dept_managers %}
+    <div class="member-card">
+      {% set is_vacant = not mgr.username or mgr.username == 'Vacant' or mgr.username == 'Unknown' %}
+      {% if mgr.pfp and not is_vacant %}
+        <img src="{{ mgr.pfp }}" class="member-pfp" alt="{{ title }}"/>
+      {% else %}
+        <div class="member-pfp-ph vacant">
+          {% if not is_vacant %}{{ mgr.username[0].upper() }}{% else %}?{% endif %}
+        </div>
+      {% endif %}
+      <div class="member-name {% if is_vacant %}vacant{% endif %}">
+        {% if is_vacant %}Vacant{% else %}{{ mgr.username }}{% endif %}
+      </div>
+      <div class="member-role-badge {% if is_vacant %}rb-vacant{% else %}{{ rbc }}{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:9px;height:9px"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
+        {{ title }}
+      </div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">{{ dept_label }} Dept.</div>
+      {% if mgr.uid and not is_vacant %}<div class="member-uid">ID: {{ mgr.uid }}</div>{% endif %}
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+<div class="team-footer">
+  <p>VOIDCRAFT STUDIO © 2026 · ALL RIGHTS RESERVED · INTERNAL USE ONLY</p>
+  <div class="dev-credit">executive website developer — <span>aayushl2</span></div>
+</div>
+
+<script>
+function toggleTheme(){
+  const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  localStorage.setItem('vc_theme',d?'light':'dark');
+  updateIcon(!d);
+}
+function updateIcon(dark){
+  const i=document.getElementById('themeIcon');if(!i)return;
+  i.innerHTML=dark
+    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    :'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+}
+(function(){
+  const t=localStorage.getItem('vc_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  updateIcon(t==='dark');
+})();
+</script>
+</body>
+</html>

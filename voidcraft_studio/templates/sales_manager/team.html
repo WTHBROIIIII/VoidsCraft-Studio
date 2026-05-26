@@ -1,0 +1,423 @@
+{% extends "sales_manager/base_salesmanager.html" %}
+{% set page = 'team' %}
+
+{% block title %}Team{% endblock %}
+{% block tab_team %}active{% endblock %}
+{% block breadcrumb %}TEAM{% endblock %}
+
+{% block head %}
+<style>
+  /* ── SEARCH / FILTER BAR ── */
+  .team-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .team-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+  }
+  .team-search-wrap svg {
+    position: absolute;
+    left: 11px; top: 50%;
+    transform: translateY(-50%);
+    width: 14px; height: 14px;
+    color: var(--text3);
+    pointer-events: none;
+  }
+  .team-search {
+    width: 100%;
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 8px 12px 8px 34px;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .team-search:focus { border-color: var(--gold); }
+  .team-search::placeholder { color: var(--text3); }
+
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: var(--r);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--font);
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filter-btn.active { background: var(--gold-dim); border-color: rgba(240,180,41,0.35); color: var(--gold); }
+
+  .team-count {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .team-count span { color: var(--gold); font-weight: 600; }
+
+  /* ── MEMBER GRID ── */
+  .member-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── MEMBER CARD ── */
+  .member-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r3);
+    padding: 20px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    transition: border-color .2s, transform .2s;
+    position: relative;
+  }
+  .member-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .member-card.online-card { border-color: rgba(34,211,160,0.25); }
+  .member-card.online-card:hover { border-color: rgba(34,211,160,0.5); }
+
+  /* Probation ribbon */
+  .probation-ribbon {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 9px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid rgba(245,166,35,0.3);
+  }
+
+  /* Avatar */
+  .member-avatar-wrap { position: relative; flex-shrink: 0; }
+  .member-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border2);
+    transition: border-color .2s;
+  }
+  .member-card.online-card .member-avatar { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,211,160,0.15); }
+  .member-avatar-ph {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 2px solid rgba(240,180,41,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 22px; font-weight: 800;
+    color: var(--gold);
+  }
+  .member-online-dot {
+    position: absolute;
+    bottom: 2px; right: 2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+  }
+  .dot-online  { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .dot-offline { background: var(--text4); }
+
+  /* Info */
+  .member-name {
+    font-size: 14px; font-weight: 700;
+    color: var(--text);
+    font-family: var(--display);
+    letter-spacing: -.01em;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  .member-nick {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: -4px;
+  }
+  .member-status {
+    font-size: 10px;
+    font-family: var(--mono);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .member-status.online  { color: var(--green); }
+  .member-status.offline { color: var(--text4); }
+
+  .member-last-login {
+    font-size: 10px;
+    color: var(--text4);
+    font-family: var(--mono);
+  }
+
+  /* ── SKELETON LOADING ── */
+  .skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .skeleton-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r3);
+    padding: 20px 16px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .skel {
+    background: linear-gradient(90deg, var(--card2) 25%, var(--card3) 50%, var(--card2) 75%);
+    background-size: 200% 100%;
+    animation: skel-shine 1.4s infinite;
+    border-radius: var(--r);
+  }
+  @keyframes skel-shine { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skel-circle { width: 64px; height: 64px; border-radius: 50%; }
+  .skel-line   { height: 10px; }
+
+  /* ── EMPTY / ERROR STATES ── */
+  .team-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .team-message-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text4);
+  }
+  .team-message-icon svg { width: 22px; height: 22px; }
+  .team-message h3 { font-size: 13px; font-weight: 600; color: var(--text3); }
+  .team-message p  { font-size: 12px; color: var(--text4); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Sales Manager Portal</div>
+    <div class="page-title">Sales <span>Team</span></div>
+    <div class="page-sub">All staff members in the Sales department.</div>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="loadMembers()" id="refreshBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+</div>
+
+{# ── STAT ROW ── #}
+<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+  <div class="card2" style="display:flex;align-items:center;gap:10px;padding:12px 16px;min-width:130px">
+    <div style="width:32px;height:32px;border-radius:var(--r);background:var(--blue-dim);display:flex;align-items:center;justify-content:center;color:var(--blue)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Total</div>
+      <div id="statTotal" style="font-size:20px;font-weight:800;font-family:var(--display);color:var(--text);line-height:1">—</div>
+    </div>
+  </div>
+  <div class="card2" style="display:flex;align-items:center;gap:10px;padding:12px 16px;min-width:130px">
+    <div style="width:32px;height:32px;border-radius:var(--r);background:var(--green-dim);display:flex;align-items:center;justify-content:center;color:var(--green)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Online</div>
+      <div id="statOnline" style="font-size:20px;font-weight:800;font-family:var(--display);color:var(--green);line-height:1">—</div>
+    </div>
+  </div>
+  <div class="card2" style="display:flex;align-items:center;gap:10px;padding:12px 16px;min-width:130px">
+    <div style="width:32px;height:32px;border-radius:var(--r);background:var(--amber-dim);display:flex;align-items:center;justify-content:center;color:var(--amber)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Probation</div>
+      <div id="statProbation" style="font-size:20px;font-weight:800;font-family:var(--display);color:var(--amber);line-height:1">—</div>
+    </div>
+  </div>
+</div>
+
+{# ── TOOLBAR ── #}
+<div class="team-toolbar">
+  <div class="team-search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="team-search" id="teamSearch" type="text" placeholder="Search member…" oninput="renderCards()"/>
+  </div>
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('online',this)">Online</button>
+  <button class="filter-btn" onclick="setFilter('probation',this)">Probation</button>
+  <div class="team-count">Showing <span id="showCount">—</span> members</div>
+</div>
+
+{# ── MEMBER GRID ── #}
+<div class="card" style="padding:20px">
+  <div class="member-grid" id="memberGrid">
+    {# Skeleton placeholders while loading #}
+    {% for _ in range(8) %}
+    <div class="skeleton-card">
+      <div class="skel skel-circle"></div>
+      <div class="skel skel-line" style="width:70%"></div>
+      <div class="skel skel-line" style="width:45%"></div>
+      <div class="skel skel-line" style="width:55%"></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var allMembers = [];
+var currentFilter = 'all';
+
+/* ── LOAD FROM API ── */
+function loadMembers() {
+  var btn = document.getElementById('refreshBtn');
+  if (btn) btn.disabled = true;
+
+  fetch('/api/dept-members/sales')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      allMembers = data.members || [];
+      updateStats();
+      renderCards();
+      if (btn) btn.disabled = false;
+    })
+    .catch(function(e) {
+      console.error(e);
+      document.getElementById('memberGrid').innerHTML =
+        '<div class="team-message">' +
+          '<div class="team-message-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+          '<h3>Could not load members</h3>' +
+          '<p>Check your connection or try refreshing.</p>' +
+        '</div>';
+      if (btn) btn.disabled = false;
+    });
+}
+
+/* ── UPDATE STAT BADGES ── */
+function updateStats() {
+  var online    = allMembers.filter(function(m){ return m.online; }).length;
+  var probation = allMembers.filter(function(m){ return m.probation; }).length;
+  document.getElementById('statTotal').textContent    = allMembers.length;
+  document.getElementById('statOnline').textContent   = online;
+  document.getElementById('statProbation').textContent= probation;
+}
+
+/* ── FILTER BUTTONS ── */
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderCards();
+}
+
+/* ── RENDER CARDS ── */
+function renderCards() {
+  var search  = (document.getElementById('teamSearch').value || '').toLowerCase();
+  var grid    = document.getElementById('memberGrid');
+
+  var filtered = allMembers.filter(function(m) {
+    var matchSearch = !search ||
+      (m.username || '').toLowerCase().includes(search) ||
+      (m.nick     || '').toLowerCase().includes(search);
+    var matchFilter =
+      currentFilter === 'all' ||
+      (currentFilter === 'online'    && m.online) ||
+      (currentFilter === 'probation' && m.probation);
+    return matchSearch && matchFilter;
+  });
+
+  document.getElementById('showCount').textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    grid.innerHTML =
+      '<div class="team-message">' +
+        '<div class="team-message-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>' +
+        '<h3>No members found</h3>' +
+        '<p>Try a different search or filter.</p>' +
+      '</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(function(m) {
+    var initial = (m.username || '?')[0].toUpperCase();
+    var avatar  = m.pfp
+      ? '<img class="member-avatar" src="' + m.pfp + '" alt="' + esc(m.username) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">' +
+        '<div class="member-avatar-ph" style="display:none">' + initial + '</div>'
+      : '<div class="member-avatar-ph">' + initial + '</div>';
+
+    var nickLine = (m.nick && m.nick !== m.username)
+      ? '<div class="member-nick">' + esc(m.nick) + '</div>'
+      : '';
+
+    var probRibbon = m.probation
+      ? '<div class="probation-ribbon">Probation</div>'
+      : '';
+
+    var lastLogin = m.last_login
+      ? '<div class="member-last-login">Last seen ' + esc(m.last_login) + '</div>'
+      : '';
+
+    return (
+      '<div class="member-card ' + (m.online ? 'online-card' : '') + '">' +
+        probRibbon +
+        '<div class="member-avatar-wrap">' +
+          avatar +
+          '<div class="member-online-dot ' + (m.online ? 'dot-online' : 'dot-offline') + '"></div>' +
+        '</div>' +
+        '<div class="member-name">' + esc(m.username) + '</div>' +
+        nickLine +
+        '<div class="member-status ' + (m.online ? 'online' : 'offline') + '">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>' +
+          (m.online ? 'Online' : 'Offline') +
+        '</div>' +
+        lastLogin +
+      '</div>'
+    );
+  }).join('');
+}
+
+/* ── HTML ESCAPE ── */
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* ── INIT ── */
+loadMembers();
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "marketing/base_marketing.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+
+{% block head %}
+<style>
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.comp-grid{grid-template-columns:1fr 1fr}}
+.comp-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.comp-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:8px}
+.comp-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)}
+.comp-row:last-child{border-bottom:none}
+.comp-val{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.mgmt-card{background:linear-gradient(135deg,rgba(245,166,35,.12) 0%,rgba(244,114,182,.08) 100%);border:1px solid rgba(245,166,35,.3);border-radius:var(--r);padding:14px 16px;margin-top:12px}
+.prob-notice{background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-top:12px;font-size:12px;color:var(--amber);display:flex;gap:8px;align-items:flex-start}
+.prob-notice svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+
+<div class="welcome">
+  <h1>Welcome, {{ username }} 🎉</h1>
+  <p>Tracking your marketing activity and department objectives.</p>
+</div>
+
+<div class="main-grid">
+  <div class="col-left">
+
+    <!-- COMPENSATION -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Compensation Structure
+        {% if prob %}<span class="badge amber" style="margin-left:auto">Probation −30%</span>{% endif %}
+      </div>
+
+      {% if prob %}
+      <div class="prob-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>You are on <strong>probation</strong>. All rates below are <strong>30% reduced</strong> from standard. Full rates unlock upon completing probation.</span>
+      </div>
+      {% endif %}
+
+      <!-- 3-column role grid -->
+      <div class="comp-grid" style="margin-top:14px">
+
+        <!-- JUNIOR -->
+        <div class="comp-card">
+          <div class="comp-label" style="color:var(--text2)">Junior Marketer</div>
+          <div class="comp-row"><span style="color:var(--text2)">Per mutual giveaway</span>
+            <span class="comp-val">{% if prob %}28R${% else %}40R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per invite</span>
+            <span class="comp-val">{% if prob %}7R${% else %}10R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per FOTD</span>
+            <span class="comp-val">{% if prob %}7R${% else %}10R${% endif %}</span></div>
+        </div>
+
+        <!-- MARKETER -->
+        <div class="comp-card" style="border-color:rgba(245,166,35,.3)">
+          <div class="comp-label" style="color:var(--accent)">Marketer</div>
+          <div class="comp-row"><span style="color:var(--text2)">Per mutual giveaway</span>
+            <span class="comp-val">{% if prob %}31.5R${% else %}45R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per invite</span>
+            <span class="comp-val">{% if prob %}10.5R${% else %}15R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per FOTD</span>
+            <span class="comp-val">{% if prob %}7R${% else %}10R${% endif %}</span></div>
+        </div>
+
+        <!-- SENIOR -->
+        <div class="comp-card" style="border-color:rgba(244,114,182,.3)">
+          <div class="comp-label" style="color:var(--pink)">Senior Marketer</div>
+          <div class="comp-row"><span style="color:var(--text2)">Per mutual giveaway</span>
+            <span class="comp-val" style="color:var(--pink)">{% if prob %}35R${% else %}50R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per invite</span>
+            <span class="comp-val" style="color:var(--pink)">{% if prob %}14R${% else %}20R${% endif %}</span></div>
+          <div class="comp-row"><span style="color:var(--text2)">Per FOTD</span>
+            <span class="comp-val" style="color:var(--pink)">{% if prob %}7R${% else %}10R${% endif %}</span></div>
+        </div>
+      </div>
+
+      <!-- MANAGEMENT -->
+      <div class="mgmt-card">
+        <div style="font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:10px">Marketing Management</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Per giveaway</div>
+            <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--accent)">{% if prob %}35R${% else %}50R${% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Per invite</div>
+            <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--accent)">{% if prob %}14R${% else %}20R${% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Per FOTD</div>
+            <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--accent)">{% if prob %}10.5R${% else %}15R${% endif %}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px">Base pay/month</div>
+            <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:var(--pink)">{% if prob %}175R${% else %}250R${% endif %}</div>
+          </div>
+        </div>
+        {% if prob %}<div style="font-size:11px;color:var(--amber);margin-top:8px">⚠ All rates shown are 30% reduced due to probation.</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- RECENT GIVEAWAY LOGS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+        My Recent Giveaway Logs
+      </div>
+      {% set glogs = giveaway_logs %}
+      {% if glogs %}
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>ID</th><th>Server</th><th>Their Ping</th><th>Our Ping</th><th>Proof</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for log in glogs[:8] %}
+            <tr>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">{{ log.id }}</td>
+              <td class="pri">{{ (log.details.server if log.details is mapping else '—') or '—' }}</td>
+              <td>{{ (log.details.their_ping if log.details is mapping else '—') or '—' }}</td>
+              <td>{{ (log.details.our_ping if log.details is mapping else '—') or '—' }}</td>
+              <td>{% if log.proof %}<a href="{{ log.proof }}" target="_blank" class="proof-link">View ↗</a>{% else %}—{% endif %}</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">{{ log.timestamp or '—' }}</td>
+              <td><span class="badge {% if log.status=='Accepted' %}green{% elif log.status=='Denied' %}red{% else %}amber{% endif %}"><span class="badge-dot"></span>{{ log.status or 'Pending' }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/></svg>
+        <p>No giveaway logs yet. Use /log-giveaway in Discord.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /col-left -->
+
+  <div class="col-right">
+
+    <!-- QUICK STATS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        My Stats
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% set total_g = giveaway_logs|length %}
+        {% set acc_g = accepted_giveaway|length %}
+        {% set pend_g = pending_logs|selectattr('type','equalto','Giveaway')|list|length %}
+        {% set den_g = denied_logs|selectattr('type','equalto','Giveaway')|list|length %}
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Total Submitted</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent)">{{ total_g }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Accepted</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)">{{ acc_g }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--green)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Pending</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--amber)">{{ pend_g }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Denied</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--red)">{{ den_g }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROADCASTS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Targeted Broadcasts
+      </div>
+      {% if broadcasts %}
+        {% for b in broadcasts[:5] %}
+        <div class="bc-item">
+          <div class="bc-dept">{{ b.dept_name or 'All Departments' }}</div>
+          <div class="bc-title">{{ b.title }}</div>
+          <div class="bc-body">{{ b.content }}</div>
+          <div class="bc-time">{{ b.author or 'Admin' }} · {{ b.timestamp }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+        <p>No active broadcasts</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- JOB DIRECTIVES -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Active Job Directives
+      </div>
+      {% if directives %}
+        {% for job in directives[:4] %}
+        <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">{{ job.title }}</div>
+            <span class="badge {% if job.priority=='High' %}red{% elif job.priority=='Medium' %}amber{% else %}green{% endif %}">{{ job.priority or '—' }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:5px">{{ job.content }}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">📅 {{ job.deadline or '—' }} · {{ job.dept_name or '—' }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty" style="padding:20px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;opacity:.3;display:block;margin:0 auto 8px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+        <p>No active directives</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- DISCORD PROFILE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 71 55" fill="currentColor" style="width:16px;height:16px"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+        Discord Profile
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        {% if pfp %}<img src="{{ pfp }}" style="width:46px;height:46px;border-radius:50%;border:2px solid var(--accent)" alt="pfp"/>
+        {% else %}<div style="width:46px;height:46px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--accent)">{{ (username or 'M')[0].upper() }}</div>{% endif %}
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">{{ username }}</div>
+          <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">ID: {{ uid }}</div>
+          <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+            <span class="badge accent"><span class="badge-dot"></span>Marketing</span>
+            {% if probation %}<span class="badge amber"><span class="badge-dot"></span>Probation</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

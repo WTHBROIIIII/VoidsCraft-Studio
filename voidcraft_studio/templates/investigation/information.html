@@ -1,0 +1,226 @@
+{% extends "investigation/base_investigation.html" %}
+{% block title %}Information{% endblock %}
+{% block tab_info %}active{% endblock %}
+
+{% block head %}
+<style>
+.info-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.info-2col{grid-template-columns:1fr}}
+.chart-wrap{height:240px;position:relative}
+.score-table{width:100%;border-collapse:collapse}
+.score-table th{text-align:left;padding:9px 12px;font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--border)}
+.score-table td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.score-table tr:last-child td{border-bottom:none}
+.score-table tr:hover td{background:var(--card2)}
+.quality-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.rule-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.6}
+.rule-item:last-child{border-bottom:none}
+.rule-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.rule-icon svg{width:12px;height:12px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set investigation_logs = investigation_logs | default([]) %}
+{% set accepted_investigation = accepted_investigation | default([]) %}
+{% set pending_logs = pending_logs | default([]) %}
+{% set denied_logs = denied_logs | default([]) %}
+{% set prob = probation %}
+{% set total_i = investigation_logs|length %}
+{% set acc_i   = accepted_investigation|length %}
+{% set pend_i  = pending_logs|selectattr('type','equalto','Investigation')|list|length %}
+{% set den_i   = denied_logs|selectattr('type','equalto','Investigation')|list|length %}
+
+<div class="welcome">
+  <h1>Information & Case Standards</h1>
+  <p>Pay structure, quality scoring, submission timeline, and IA requirements.</p>
+</div>
+
+<!-- TOP ROW: Score Table + Submission Chart -->
+<div class="info-2col" style="margin-bottom:20px">
+
+  <!-- SCORE / PAY TABLE -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Quality Score → Pay Table
+      {% if prob %}<span class="badge amber" style="margin-left:auto">−30%</span>{% endif %}
+    </div>
+    <table class="score-table">
+      <thead>
+        <tr>
+          <th>Quality</th>
+          <th>Avg Score</th>
+          <th>Pay</th>
+          {% if prob %}<th>Prob. Pay</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="quality-pill" style="background:var(--red-dim);color:var(--red)">● Poor</span></td>
+          <td style="font-family:var(--mono);color:var(--text2)">0 – 24</td>
+          <td style="font-family:var(--mono);font-weight:700;color:var(--text)">25R$</td>
+          {% if prob %}<td style="font-family:var(--mono);font-weight:700;color:var(--amber)">17R$</td>{% endif %}
+        </tr>
+        <tr>
+          <td><span class="quality-pill" style="background:rgba(139,147,168,.12);color:var(--text2)">● Average</span></td>
+          <td style="font-family:var(--mono);color:var(--text2)">25 – 34</td>
+          <td style="font-family:var(--mono);font-weight:700;color:var(--text)">30R$</td>
+          {% if prob %}<td style="font-family:var(--mono);font-weight:700;color:var(--amber)">21R$</td>{% endif %}
+        </tr>
+        <tr>
+          <td><span class="quality-pill" style="background:var(--blue-dim);color:var(--blue)">● Good</span></td>
+          <td style="font-family:var(--mono);color:var(--text2)">35 – 44</td>
+          <td style="font-family:var(--mono);font-weight:700;color:var(--blue)">45R$</td>
+          {% if prob %}<td style="font-family:var(--mono);font-weight:700;color:var(--amber)">31.5R$</td>{% endif %}
+        </tr>
+        <tr>
+          <td><span class="quality-pill" style="background:var(--green-dim);color:var(--green)">● Excellent</span></td>
+          <td style="font-family:var(--mono);color:var(--text2)">40 – 50</td>
+          <td style="font-family:var(--mono);font-weight:700;color:var(--green)">60R$</td>
+          {% if prob %}<td style="font-family:var(--mono);font-weight:700;color:var(--amber)">42R$</td>{% endif %}
+        </tr>
+        <tr>
+          <td><span class="quality-pill" style="background:rgba(74,81,104,.15);color:var(--text3)">N/A</span></td>
+          <td style="font-family:var(--mono);color:var(--text3)">—</td>
+          <td style="font-family:var(--mono);color:var(--text3)">N/A</td>
+          {% if prob %}<td style="color:var(--text3)">N/A</td>{% endif %}
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);font-size:11px;color:var(--text2);line-height:1.6">
+      Score = average of <strong style="color:var(--text)">Logical Reasoning & Conclusion</strong>, <strong style="color:var(--text)">Format</strong>, <strong style="color:var(--text)">Accuracy</strong>, and <strong style="color:var(--text)">Grammar</strong> — each rated /10 by management after case review.
+    </div>
+  </div>
+
+  <!-- SUBMISSION TIMELINE BAR CHART -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      My Submission Timeline
+    </div>
+    <div class="chart-wrap"><canvas id="timelineChart"></canvas></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+      <div style="text-align:center;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Total</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--text)">{{ total_i }}</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--card2);border:1px solid rgba(34,211,160,.2);border-radius:var(--r)">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Accepted</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--green)">{{ acc_i }}</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--card2);border:1px solid rgba(245,166,35,.2);border-radius:var(--r)">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Pending</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--amber)">{{ pend_i }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW: Rules + Activity Requirements -->
+<div class="info-2col">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Case Submission Rules
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--accent-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <span>Always submit your draft to <strong style="color:var(--text)">🔍┇report-review</strong> first before posting anywhere.</span>
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--green-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <span>Wait for a <strong style="color:var(--text)">✅ checkmark</strong> reaction or verbal confirmation from IA Management.</span>
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--blue-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+      <span>Once approved, post to the <strong style="color:var(--text)">official case logs channel</strong> only.</span>
+    </div>
+    <div class="rule-item" style="border-color:rgba(240,90,90,.2)">
+      <div class="rule-icon" style="background:var(--red-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      <span><strong style="color:var(--red)">NEVER</strong> post directly to the public blacklist. Only IA Management handles that step.</span>
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--purple-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <span>All case files must be <strong style="color:var(--text)">perfectly formatted</strong> before submission. Formatting is part of your score.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      IA Activity Requirements
+    </div>
+    <div style="background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.2);border-radius:var(--r);padding:14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7">
+      This is an official notice regarding team activity. We are handling a <strong style="color:var(--text)">high volume of cases</strong> and need everyone pulling their weight.
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--accent-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <span>Maintain an <strong style="color:var(--text)">active presence</strong> and consistently handle investigation tickets.</span>
+    </div>
+    <div class="rule-item" style="border-color:rgba(240,90,90,.2)">
+      <div class="rule-icon" style="background:var(--red-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+      <span>Going inactive without an <strong style="color:var(--red)">LOA (Leave of Absence)</strong> risks immediate termination from the IA team.</span>
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--amber-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg></div>
+      <span>File an LOA in the appropriate channel before going inactive for any extended period.</span>
+    </div>
+    <div class="rule-item">
+      <div class="rule-icon" style="background:var(--green-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <span>We only have room for <strong style="color:var(--text)">active investigators</strong>. Consistency is expected at all times.</span>
+    </div>
+    {% if prob %}
+    <div style="margin-top:12px;padding:10px 12px;background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--r);font-size:12px;color:var(--amber)">
+      ⚠ You are on <strong>probation</strong>. All pay is 30% reduced until your manager lifts the probation status.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Build per-month data from logs passed in
+const logs = {{ investigation_logs | tojson }};
+const monthMap = {};
+logs.forEach(l => {
+  if (!l.timestamp) return;
+  const month = l.timestamp.substring(0, 7); // "2026-05"
+  monthMap[month] = (monthMap[month] || 0) + 1;
+});
+const sortedMonths = Object.keys(monthMap).sort();
+const labels = sortedMonths.map(m => {
+  const [y, mo] = m.split('-');
+  return new Date(y, parseInt(mo) - 1).toLocaleString('default', {month:'short', year:'2-digit'});
+});
+const values = sortedMonths.map(m => monthMap[m]);
+
+// Fallback if no data
+const finalLabels = labels.length ? labels : ['No data'];
+const finalValues = values.length ? values : [0];
+
+new Chart(document.getElementById('timelineChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: finalLabels,
+    datasets: [{
+      label: 'Cases Submitted',
+      data: finalValues,
+      backgroundColor: 'rgba(79,142,247,.25)',
+      borderColor: '#4f8ef7',
+      borderWidth: 1.5,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#8b93a8', font: { family: 'JetBrains Mono', size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#8b93a8', font: { family: 'JetBrains Mono', size: 10 }, stepSize: 1 } }
+    }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends "marketing_manager/base_marketing.html" %}
+{% set page = 'analytics' %}
+
+{% block title %}Analytics{% endblock %}
+{% block tab_analytics %}active{% endblock %}
+{% block breadcrumb %}ANALYTICS{% endblock %}
+
+{% block head %}
+<style>
+  .analytics-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+  .analytics-grid.full  { grid-template-columns:1fr; }
+  @media(max-width:800px) { .analytics-grid { grid-template-columns:1fr; } }
+
+  .chart-wrap { position:relative; width:100%; }
+  .chart-wrap.h200 { height:200px; }
+  .chart-wrap.h280 { height:280px; }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+  @media(max-width:900px){ .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+  .kpi-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r3); padding:16px 18px; position:relative; overflow:hidden; transition:border-color .2s,transform .2s; }
+  .kpi-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+  .kpi-card::before { content:''; position:absolute; top:0; right:0; width:60px; height:60px; border-radius:50%; filter:blur(20px); opacity:.5; pointer-events:none; }
+  .kpi-card.k-purple::before { background:var(--purple); }
+  .kpi-card.k-green::before  { background:var(--green); }
+  .kpi-card.k-amber::before  { background:var(--amber); }
+  .kpi-card.k-blue::before   { background:var(--blue); }
+  .kpi-label { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+  .kpi-val { font-family:var(--display); font-size:28px; font-weight:800; line-height:1; letter-spacing:-.03em; margin-bottom:3px; }
+  .kpi-card.k-purple .kpi-val { color:var(--purple); }
+  .kpi-card.k-green  .kpi-val { color:var(--green); }
+  .kpi-card.k-amber  .kpi-val { color:var(--amber); }
+  .kpi-card.k-blue   .kpi-val { color:var(--blue); }
+  .kpi-sub { font-size:10px; color:var(--text3); font-family:var(--mono); }
+
+  .chart-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text2); }
+  .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .legend-val { font-family:var(--mono); font-size:11px; color:var(--text3); margin-left:2px; }
+
+  .perf-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); }
+  .perf-row:last-child { border-bottom:none; }
+  .perf-rank { font-family:var(--mono); font-size:11px; color:var(--text4); width:18px; text-align:center; flex-shrink:0; }
+  .perf-rank.top1 { color:var(--mk); font-weight:700; }
+  .perf-rank.top2 { color:var(--text2); }
+  .perf-rank.top3 { color:var(--amber); }
+  .perf-name { flex:1; font-size:13px; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .perf-bar-wrap { width:80px; height:5px; background:var(--card3); border-radius:3px; overflow:hidden; }
+  .perf-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--mk)); }
+  .perf-count { font-family:var(--mono); font-size:11px; color:var(--mk); width:24px; text-align:right; flex-shrink:0; }
+
+  .sec-eyebrow { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--text3); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .sec-eyebrow::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .no-data { display:flex; flex-direction:column; align-items:center; justify-content:center; height:120px; color:var(--text4); font-size:12px; font-family:var(--mono); gap:6px; }
+  .no-data svg { width:24px; height:24px; opacity:.4; }
+
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse-live 2s ease-in-out infinite; display:inline-block; margin-right:4px; }
+  @keyframes pulse-live { 0%,100%{opacity:1}50%{opacity:.4} }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── DATA ── #}
+{% set all_mk  = marketing_logs %}
+{% set acc_mk  = accepted_marketing %}
+{% set pend_mk = pending_logs | selectattr('type','equalto','Marketing') | list %}
+{% set den_mk  = denied_logs  | selectattr('type','equalto','Marketing') | list %}
+
+{% set mk_rate   = ((acc_mk|length  / all_mk|length * 100)|round(1)) if all_mk|length > 0 else 0 %}
+{% set pend_rate = ((pend_mk|length / all_mk|length * 100)|round(1)) if all_mk|length > 0 else 0 %}
+{% set deny_rate = ((den_mk|length  / all_mk|length * 100)|round(1)) if all_mk|length > 0 else 0 %}
+
+{# ── monthly counts ── #}
+{% set m01=namespace(n=0) %}{% set m02=namespace(n=0) %}{% set m03=namespace(n=0) %}
+{% set m04=namespace(n=0) %}{% set m05=namespace(n=0) %}{% set m06=namespace(n=0) %}
+{% set m07=namespace(n=0) %}{% set m08=namespace(n=0) %}{% set m09=namespace(n=0) %}
+{% set m10=namespace(n=0) %}{% set m11=namespace(n=0) %}{% set m12=namespace(n=0) %}
+
+{% for l in all_mk %}
+  {% if l.timestamp %}
+    {% set mo = l.timestamp[:7] %}
+    {% if   mo=='2026-01' %}{% set m01.n=m01.n+1 %}
+    {% elif mo=='2026-02' %}{% set m02.n=m02.n+1 %}
+    {% elif mo=='2026-03' %}{% set m03.n=m03.n+1 %}
+    {% elif mo=='2026-04' %}{% set m04.n=m04.n+1 %}
+    {% elif mo=='2026-05' %}{% set m05.n=m05.n+1 %}
+    {% elif mo=='2026-06' %}{% set m06.n=m06.n+1 %}
+    {% elif mo=='2026-07' %}{% set m07.n=m07.n+1 %}
+    {% elif mo=='2026-08' %}{% set m08.n=m08.n+1 %}
+    {% elif mo=='2026-09' %}{% set m09.n=m09.n+1 %}
+    {% elif mo=='2026-10' %}{% set m10.n=m10.n+1 %}
+    {% elif mo=='2026-11' %}{% set m11.n=m11.n+1 %}
+    {% elif mo=='2026-12' %}{% set m12.n=m12.n+1 %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{# performers #}
+{% set perf_list = [] %}
+{% for u, logs in all_mk | groupby('username') %}
+  {% set _ = perf_list.append({'name':u,'count':logs|list|length}) %}
+{% endfor %}
+{% set top_mk = perf_list | sort(attribute='count',reverse=True) %}
+{% set max_mk = top_mk[0].count if top_mk else 1 %}
+
+{# ── HEADER ── #}
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Marketing Manager Portal</div>
+    <div class="page-title">Analytics <span>&amp; Insights</span></div>
+    <div class="page-sub"><span class="live-dot"></span>Live performance overview for the Marketing department.</div>
+  </div>
+</div>
+
+{# ── KPIs ── #}
+<div class="kpi-grid">
+  <div class="kpi-card k-purple">
+    <div class="kpi-label">Total Marketing Logs</div>
+    <div class="kpi-val">{{ all_mk|length }}</div>
+    <div class="kpi-sub">All time</div>
+  </div>
+  <div class="kpi-card k-green">
+    <div class="kpi-label">Accepted</div>
+    <div class="kpi-val">{{ acc_mk|length }}</div>
+    <div class="kpi-sub">{{ mk_rate }}% approval rate</div>
+  </div>
+  <div class="kpi-card k-amber">
+    <div class="kpi-label">Pending</div>
+    <div class="kpi-val">{{ pend_mk|length }}</div>
+    <div class="kpi-sub">{{ pend_rate }}% of total</div>
+  </div>
+  <div class="kpi-card k-blue">
+    <div class="kpi-label">Denied</div>
+    <div class="kpi-val">{{ den_mk|length }}</div>
+    <div class="kpi-sub">{{ deny_rate }}% of total</div>
+  </div>
+</div>
+
+{# ── STATUS PIE ── #}
+<div class="sec-eyebrow">Status Breakdown</div>
+<div class="analytics-grid full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        Marketing Log Status
+      </div>
+    </div>
+    {% if all_mk|length > 0 %}
+    <div class="chart-wrap h200"><canvas id="mkPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Accepted<span class="legend-val">{{ acc_mk|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Pending<span class="legend-val">{{ pend_mk|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Denied<span class="legend-val">{{ den_mk|length }}</span></div>
+    </div>
+    {% else %}
+    <div class="no-data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>
+      No data yet
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── MONTHLY BAR ── #}
+<div class="sec-eyebrow">Monthly Activity</div>
+<div class="analytics-grid full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Marketing Logs by Month — 2026
+      </div>
+    </div>
+    <div class="chart-wrap h280"><canvas id="monthlyBar"></canvas></div>
+    <div class="chart-legend" style="margin-top:14px">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--mk)"></div>Marketing Logs</div>
+    </div>
+  </div>
+</div>
+
+{# ── TOP PERFORMERS ── #}
+<div class="sec-eyebrow">Top Performers</div>
+<div class="analytics-grid full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Top Marketing Staff
+      </div>
+    </div>
+    {% if top_mk %}
+      {% for p in top_mk[:8] %}
+      <div class="perf-row">
+        <div class="perf-rank {% if loop.index==1 %}top1{% elif loop.index==2 %}top2{% elif loop.index==3 %}top3{% endif %}">{{ loop.index }}</div>
+        <div class="perf-name">{{ p.name }}</div>
+        <div class="perf-bar-wrap"><div class="perf-bar-fill" style="width:{{ ((p.count/max_mk)*100)|round }}%"></div></div>
+        <div class="perf-count">{{ p.count }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="no-data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      No logs yet
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── APPROVAL RATES ── #}
+<div class="sec-eyebrow">Approval Rates</div>
+<div class="analytics-grid full">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Approval Rate Overview
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;padding:4px 0">
+      {% for label, val, col, count, total in [
+        ('Marketing — Accepted', mk_rate,   'var(--green)', acc_mk|length,  all_mk|length),
+        ('Marketing — Pending',  pend_rate, 'var(--amber)', pend_mk|length, all_mk|length),
+        ('Marketing — Denied',   deny_rate, 'var(--red)',   den_mk|length,  all_mk|length),
+      ] %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">{{ label }}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:{{ col }}">{{ count }} / {{ total }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:{{ col }};border-radius:4px;width:{{ val }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ val }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{#
+  ── KEY FIX: inject monthly data as a JS variable here, still inside
+     {% block content %} where the namespace vars are in scope.
+     The {% block scripts %} block cannot see variables set in content.
+#}
+<script>
+  window._mkMonthly = [
+    {{ m01.n }},{{ m02.n }},{{ m03.n }},{{ m04.n }},
+    {{ m05.n }},{{ m06.n }},{{ m07.n }},{{ m08.n }},
+    {{ m09.n }},{{ m10.n }},{{ m11.n }},{{ m12.n }}
+  ];
+  window._mkPieData = [{{ acc_mk|length }}, {{ pend_mk|length }}, {{ den_mk|length }}];
+  window._mkHasData = {{ 'true' if all_mk|length > 0 else 'false' }};
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function rgba(hex,a){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+var mk='#a78bfa', green='#22d3a0', amber='#f5a623', red='#f05a5a';
+
+if(window._mkHasData){
+  new Chart(document.getElementById('mkPie').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Accepted','Pending','Denied'],
+      datasets:[{
+        data: window._mkPieData,
+        backgroundColor:[rgba(green,.2), rgba(amber,.2), rgba(red,.2)],
+        borderColor:[green, amber, red],
+        borderWidth:1.5,
+        hoverOffset:6
+      }]
+    },
+    options:{
+      cutout:'65%',
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}
+      }
+    }
+  });
+}
+
+new Chart(document.getElementById('monthlyBar').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[{
+      label:'Marketing Logs',
+      data: window._mkMonthly,
+      backgroundColor:rgba(mk,.25),
+      borderColor:mk,
+      borderWidth:1.5,
+      borderRadius:4,
+      borderSkipped:false
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    scales:{
+      x:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11}}},
+      y:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11},stepSize:1,precision:0},beginAtZero:true}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw;}}}
+    }
+  }
+});
+</script>
+{% endblock %}

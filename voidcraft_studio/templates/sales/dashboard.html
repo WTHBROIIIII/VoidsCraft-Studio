@@ -1,0 +1,311 @@
+{% extends "sales/base_sales.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+
+{% block content %}
+{% set is_probation = 'probation' in (role or '') %}
+{% set prob_note = is_probation %}
+
+<div class="welcome">
+  <h1>Welcome, {{ username }} 👋</h1>
+  <p>Tracking your sales and department objectives.</p>
+</div>
+
+<div class="main-grid">
+  <!-- LEFT COLUMN -->
+  <div class="col-left">
+
+    <!-- COMPENSATION STRUCTURE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Detailed Compensation Structure
+        {% if prob_note %}<span class="badge amber" style="margin-left:auto">Probation -30%</span>{% endif %}
+      </div>
+
+      {% if prob_note %}
+      <div class="probation-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>You are currently on <strong>probation</strong>. All pay rates shown are <strong>30% reduced</strong> from standard rates. Complete your probation period to unlock full pay.</span>
+      </div>
+      {% endif %}
+
+      {% if prob_note %}
+        {% set int_rate = "7%" %}
+        {% set ext_rate = "21%" %}
+        {% set out_rate = "3.5R$" %}
+      {% else %}
+        {% set int_rate = "10%" %}
+        {% set ext_rate = "30%" %}
+        {% set out_rate = "5R$" %}
+      {% endif %}
+
+      <div class="comp-grid">
+        <div class="comp-card">
+          <div class="comp-label">Internal Sales</div>
+          <div class="comp-value">{{ int_rate }}<span>/sale</span></div>
+          <div class="comp-desc">Calculated after standard tax deductions.</div>
+        </div>
+        <div class="comp-card">
+          <div class="comp-label">External Sales</div>
+          <div class="comp-value">{{ ext_rate }}<span>/sale</span></div>
+          <div class="comp-desc">High-tier commission for non-studio leads.</div>
+        </div>
+      </div>
+
+      <div class="gradient-card">
+        <div class="gradient-card-label">Standard Outreach Pay</div>
+        <div class="gradient-card-val">{{ out_rate }}<span style="font-size:14px;opacity:.75"> per outreach</span></div>
+        <div class="gradient-card-desc">Applied to each confirmed outreach log submitted.</div>
+      </div>
+
+      <!-- OUTREACH MILESTONES -->
+      <div class="comp-section">
+        <div class="comp-section-title">Outreach Milestones</div>
+        {% if prob_note %}
+          {% set m1="70R$" %}{% set m2="7R$" %}{% set m3="140R$" %}
+        {% else %}
+          {% set m1="100R$" %}{% set m2="10R$" %}{% set m3="200R$" %}
+        {% endif %}
+        <div class="comp-row"><span class="comp-row-label">Base Milestone (20 outreaches)</span><span class="comp-row-val">{{ m1 }}</span></div>
+        <div class="comp-row"><span class="comp-row-label">Incremental (+5 outreaches)</span><span class="comp-row-val">+{{ m2 }} each</span></div>
+        <div class="comp-row"><span class="comp-row-label">Performance Cap (50 outreaches)</span><span class="comp-row-val">+{{ m3 }} bonus</span></div>
+      </div>
+
+      <!-- EXTERNAL PERFORMANCE BONUSES -->
+      <div class="comp-section">
+        <div class="comp-section-title">External Sales Performance Bonuses</div>
+        {% if prob_note %}
+          {% set j="210R$" %}{% set a="245R$" %}{% set m="315R$" %}
+        {% else %}
+          {% set j="300R$" %}{% set a="350R$" %}{% set m="450R$" %}
+        {% endif %}
+        <div class="comp-row">
+          <span class="comp-row-label">Junior Level <span style="color:var(--text3);font-size:11px">(3 extra ext. sales)</span></span>
+          <span class="comp-row-val" style="color:var(--green)">{{ j }}</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-row-label">Agent Level <span style="color:var(--text3);font-size:11px">(4 extra ext. sales)</span></span>
+          <span class="comp-row-val" style="color:var(--accent)">{{ a }}</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-row-label">Management Level <span style="color:var(--text3);font-size:11px">(4 extra ext. sales)</span></span>
+          <span class="comp-row-val" style="color:var(--purple)">{{ m }}</span>
+        </div>
+      </div>
+
+      <!-- MANAGEMENT BONUS -->
+      <div class="comp-section">
+        <div class="comp-section-title">Management Oversight Bonus</div>
+        <div class="comp-row">
+          <span class="comp-row-label">Secondary bonus (% of staff basic pay)</span>
+          <span class="comp-row-val" style="color:var(--amber)">20%</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px">Managers receive 20% of total basic pay earned by their direct reports.</div>
+      </div>
+    </div>
+
+    <!-- MY RECENT LOGS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        My Recent Log Activity
+      </div>
+      {% set my_logs = (sales_logs + outreach_logs)|sort(attribute='timestamp', reverse=True) %}
+      {% if my_logs %}
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 10px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)">ID</th>
+              <th style="text-align:left;padding:8px 10px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)">Type</th>
+              <th style="text-align:left;padding:8px 10px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)">Date</th>
+              <th style="text-align:left;padding:8px 10px;color:var(--text3);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in my_logs[:8] %}
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text3)">{{ log.id }}</td>
+              <td style="padding:8px 10px;color:var(--text)">{{ log.type }}</td>
+              <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text2)">{{ log.timestamp or '—' }}</td>
+              <td style="padding:8px 10px">
+                <span class="badge {% if log.status=='Accepted' %}green{% elif log.status=='Denied' %}red{% else %}amber{% endif %}">
+                  <span class="badge-dot"></span>{{ log.status or 'Pending' }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+        <p>No logs submitted yet. Use /log-sale or /log-outreach in Discord.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /col-left -->
+
+  <!-- RIGHT COLUMN -->
+  <div class="col-right">
+
+    <!-- QUICK STATS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        My Stats
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Sales Logs</div>
+            <div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)">{{ sales_logs|length }}</div>
+          </div>
+          <svg style="width:28px;height:28px;color:var(--green);opacity:.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Outreach Logs</div>
+            <div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent)">{{ outreach_logs|length }}</div>
+          </div>
+          <svg style="width:28px;height:28px;color:var(--accent);opacity:.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Accepted</div>
+            <div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent)">{{ (accepted_sales|length) + (accepted_outreach|length) }}</div>
+          </div>
+          <svg style="width:28px;height:28px;color:var(--accent);opacity:.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:3px">Pending</div>
+            <div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--amber)">{{ pending_logs|length }}</div>
+          </div>
+          <svg style="width:28px;height:28px;color:var(--amber);opacity:.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOB DIRECTIVES -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Job Directives
+        {% if directives %}
+        <span class="badge accent" style="margin-left:auto">{{ directives|length }}</span>
+        {% endif %}
+      </div>
+
+      {% if directives %}
+        {% for d in directives[:5] %}
+        <div style="padding:12px 0;border-bottom:1px solid var(--border){% if loop.last %};border-bottom:none{% endif %}">
+
+          {# priority color #}
+          {% if d.priority == 'High' or d.priority == 'Urgent' %}
+            {% set p_color = 'var(--red)' %}
+            {% set p_bg    = 'var(--red-dim)' %}
+          {% elif d.priority == 'Medium' %}
+            {% set p_color = 'var(--amber)' %}
+            {% set p_bg    = 'var(--amber-dim)' %}
+          {% else %}
+            {% set p_color = 'var(--accent)' %}
+            {% set p_bg    = 'var(--accent-dim)' %}
+          {% endif %}
+
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent)">
+              {{ d.dept_name or 'Sales' }}
+            </span>
+            <span style="font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:{{ p_bg }};color:{{ p_color }};border:1px solid {{ p_color }}33">
+              {{ d.priority or 'Normal' }}
+            </span>
+            {% if d.deadline %}
+            <span style="margin-left:auto;font-size:10px;font-family:var(--mono);color:var(--text3);display:flex;align-items:center;gap:4px">
+              <svg style="width:10px;height:10px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {{ d.deadline }}
+            </span>
+            {% endif %}
+          </div>
+
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.3">
+            {{ d.title }}
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px">
+            {{ d.content[:120] }}{% if d.content|length > 120 %}…{% endif %}
+          </div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">
+            {{ d.timestamp }}
+          </div>
+
+        </div>
+        {% endfor %}
+
+        {% if directives|length > 5 %}
+        <div style="text-align:center;padding-top:10px">
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">
+            +{{ directives|length - 5 }} more directive{{ 's' if directives|length - 5 > 1 else '' }}
+          </span>
+        </div>
+        {% endif %}
+
+      {% else %}
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p>No active directives from management.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TARGETED BROADCASTS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Targeted Broadcasts
+      </div>
+      {% if broadcasts %}
+        {% for b in broadcasts[:5] %}
+        <div class="broadcast-item">
+          <div class="broadcast-dept">{{ b.dept_name or 'All Departments' }}</div>
+          <div class="broadcast-title">{{ b.title }}</div>
+          <div class="broadcast-content">{{ b.content }}</div>
+          <div class="broadcast-time">{{ b.author or 'Admin' }} · {{ b.timestamp }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+        <p>No active broadcasts</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- DISCORD PROFILE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 71 55" fill="currentColor" style="width:16px;height:16px;color:var(--accent)"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+        Discord Profile
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        {% if pfp %}
+          <img src="{{ pfp }}" style="width:46px;height:46px;border-radius:50%;border:2px solid var(--accent)" alt="pfp"/>
+        {% else %}
+          <div style="width:46px;height:46px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--accent)">{{ (username or 'U')[0].upper() }}</div>
+        {% endif %}
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">{{ username }}</div>
+          <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">ID: {{ uid }}</div>
+          <div style="display:flex;gap:6px;margin-top:5px">
+            <span class="badge accent"><span class="badge-dot"></span>Sales</span>
+            {% if is_probation %}<span class="badge amber"><span class="badge-dot"></span>Probation</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col-right -->
+</div><!-- /main-grid -->
+{% endblock %}

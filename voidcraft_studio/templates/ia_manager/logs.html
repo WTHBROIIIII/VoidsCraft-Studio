@@ -1,0 +1,218 @@
+{% extends "ia_manager/base_ia.html" %}
+{% set page = 'logs' %}
+{% block title %}Case Logs{% endblock %}
+{% block tab_logs %}active{% endblock %}
+{% block breadcrumb %}CASE LOGS{% endblock %}
+
+{% block head %}
+<style>
+  .logs-layout { display:grid; grid-template-columns:1fr 320px; gap:18px; }
+  @media(max-width:1050px){ .logs-layout { grid-template-columns:1fr; } }
+
+  .filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .filter-row select, .filter-row input {
+    background:var(--input); border:1px solid var(--border); border-radius:var(--r);
+    padding:6px 10px; color:var(--text); font-size:12px; font-family:var(--font); outline:none; transition:border-color .15s;
+  }
+  .filter-row select:focus, .filter-row input:focus { border-color:var(--ia); }
+  .filter-row input { width:170px; }
+  .filter-row select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%238890ad' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; padding-right:26px; cursor:pointer; }
+
+  .detail-cell { max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set inv_logs = investigation_logs %}
+{% set acc_inv  = accepted_investigation %}
+{% set pend_inv = pending_logs | selectattr('type','equalto','Investigation') | list %}
+{% set den_inv  = denied_logs  | selectattr('type','equalto','Investigation') | list %}
+
+<div class="page-header">
+  <div>
+    <div class="page-eyebrow">Internal Affairs Portal</div>
+    <div class="page-title">Case <span>Logs</span></div>
+    <div class="page-sub">All investigation case logs — review, filter and submit new cases.</div>
+  </div>
+  <div class="page-actions">
+    <span class="badge ia">{{ inv_logs|length }} total</span>
+    <span class="badge amber">{{ pend_inv|length }} pending</span>
+  </div>
+</div>
+
+{% if request.args.get('submitted') %}
+<div style="background:var(--green-dim);border:1px solid rgba(34,211,160,0.3);border-radius:var(--r2);padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--green)">
+  <svg style="width:16px;height:16px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  Case log submitted successfully and sent for review.
+</div>
+{% endif %}
+
+<div class="logs-layout">
+
+  {# ── LEFT: LOGS TABLE ── #}
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    {# stat mini row #}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center">
+        <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--green)">{{ acc_inv|length }}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-top:2px">Accepted</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center">
+        <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--amber)">{{ pend_inv|length }}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-top:2px">Pending</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center">
+        <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--red)">{{ den_inv|length }}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-top:2px">Denied</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          All Investigation Logs
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('all',this)">All</button>
+        <button class="tab-btn" onclick="switchTab('Accepted',this)">Accepted</button>
+        <button class="tab-btn" onclick="switchTab('Pending',this)">Pending</button>
+        <button class="tab-btn" onclick="switchTab('Denied',this)">Denied</button>
+      </div>
+
+      <div class="filter-row">
+        <select id="monthSel" onchange="filterLogs()">
+          <option value="">All Time</option>
+          {% for m,lbl in [('2026-01','Jan'),('2026-02','Feb'),('2026-03','Mar'),('2026-04','Apr'),('2026-05','May'),('2026-06','Jun'),('2026-07','Jul'),('2026-08','Aug'),('2026-09','Sep'),('2026-10','Oct'),('2026-11','Nov'),('2026-12','Dec')] %}
+          <option value="{{ m }}">{{ lbl }} 2026</option>
+          {% endfor %}
+        </select>
+        <input type="text" id="searchIn" placeholder="Search investigator…" oninput="filterLogs()"/>
+      </div>
+
+      <div class="table-wrap">
+        <table id="logsTable">
+          <thead>
+            <tr>
+              <th>Case #</th>
+              <th>Investigator</th>
+              <th>Reported User</th>
+              <th>Outcome</th>
+              <th>Proof</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in inv_logs %}
+            {% set d = log.details if log.details is mapping else {} %}
+            <tr data-status="{{ log.status }}" data-ts="{{ log.timestamp }}" data-user="{{ log.username }}">
+              <td class="td-mono" style="color:var(--text3);font-size:10px">{{ d.get('case_number', log.id) or log.id }}</td>
+              <td style="color:var(--text);font-weight:500">{{ d.get('investigator', log.username) or '—' }}</td>
+              <td class="detail-cell">{{ d.get('reported_user','—') or '—' }}</td>
+              <td class="detail-cell">{{ d.get('outcome','—') or '—' }}</td>
+              <td>
+                {% if log.proof %}
+                  <a href="{{ log.proof }}" target="_blank" class="proof-link">Doc ↗</a>
+                {% else %}
+                  <span style="color:var(--text3)">—</span>
+                {% endif %}
+              </td>
+              <td class="td-mono" style="color:var(--text3)">{{ (log.timestamp or '')[:10] }}</td>
+              <td>
+                <span class="badge {% if log.status=='Accepted' %}accepted{% elif log.status=='Denied' %}denied{% else %}pending{% endif %}">
+                  <span class="badge-dot"></span>{{ log.status or 'Pending' }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7"><div class="empty"><p>No investigation logs yet.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {# ── RIGHT: SUBMIT NEW CASE ── #}
+  <div>
+    <div class="card card-ia">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Submit Case Log
+        </div>
+      </div>
+      <form action="/api/submit-case-log" method="POST">
+        <div class="form-group">
+          <label class="form-label">Reported User</label>
+          <input type="text" name="reported_user" class="form-input" placeholder="Username of reported user" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reporting User</label>
+          <input type="text" name="reporting_user" class="form-input" placeholder="Username of reporter" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Investigator</label>
+          <input type="text" name="investigator" class="form-input" placeholder="Your username" value="{{ username or '' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Investigation</label>
+          <input type="date" name="date" class="form-input" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Outcome</label>
+          <select name="outcome" class="form-select" required>
+            <option value="">Select outcome…</option>
+            <option value="Guilty">Guilty</option>
+            <option value="Innocent">Innocent</option>
+            <option value="Inconclusive">Inconclusive</option>
+            <option value="Pending Further Review">Pending Further Review</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Summary</label>
+          <textarea name="reason" class="form-textarea" rows="4" placeholder="Explain the investigation findings…" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google Doc Link</label>
+          <input type="url" name="doc_link" class="form-input" placeholder="https://docs.google.com/…" required/>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px">
+          <button type="submit" class="btn btn-ia">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Case
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(status, btn){
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  filterLogs(status);
+}
+function filterLogs(forceStatus){
+  var month  = (document.getElementById('monthSel').value || '');
+  var search = (document.getElementById('searchIn').value || '').toLowerCase();
+  var active = document.querySelector('#logsTable').closest('.card').querySelector('.tab-btn.active');
+  var status = forceStatus !== undefined ? forceStatus : (active ? active.textContent.trim() : 'all');
+  document.querySelectorAll('#logsTable tbody tr[data-status]').forEach(function(r){
+    var mM = !month || (r.dataset.ts || '').startsWith(month);
+    var mS = status === 'all' || (r.dataset.status || '') === status;
+    var mU = !search || (r.dataset.user || '').toLowerCase().includes(search);
+    r.style.display = (mM && mS && mU) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

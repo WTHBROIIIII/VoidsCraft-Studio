@@ -1,0 +1,268 @@
+{% extends "components/base.html" %}
+{% set page = 'dashboard' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block page_icon %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block breadcrumb %}DASHBOARD{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .welcome-banner {
+    background: linear-gradient(135deg, var(--bg-card) 0%, #111e3a 100%);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .welcome-banner h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .welcome-banner p { color: var(--text-muted); font-size: 12px; font-family: var(--font-mono); }
+  .welcome-badge {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+  .chart-wrap { height: 220px; position: relative; }
+  .dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .dept-badge {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: border-color 0.15s;
+  }
+  .dept-badge:hover { border-color: var(--border-accent); color: var(--text-primary); }
+  .dept-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .recent-list { display: flex; flex-direction: column; gap: 10px; }
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .recent-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .recent-icon svg { width: 15px; height: 15px; }
+  .recent-title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .recent-meta { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set total_logs = (accepted_logs|length if accepted_logs is defined else 0) + (pending_logs|length if pending_logs is defined else 0) %}
+{% set acc_count = accepted_logs|length if accepted_logs is defined else 0 %}
+{% set pend_count = pending_logs|length if pending_logs is defined else 0 %}
+{% set broad_count = broadcasts|length if broadcasts is defined else 0 %}
+{% set dir_count = directives|length if directives is defined else 0 %}
+
+<!-- WELCOME BANNER -->
+<div class="welcome-banner">
+  <div>
+    <h2>Welcome back, {{ username }} 👋</h2>
+    <p>VoidCraft Studio Staff Portal · {{ now().strftime('%B %d, %Y') if now is defined else '' }} · Discord ID: {{ uid }}</p>
+  </div>
+  <div class="welcome-badge">ADMIN ACCESS</div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stat-grid">
+  <div class="stat-card blue">
+    <div class="stat-label">Total Logs</div>
+    <div class="stat-value">{{ total_logs }}</div>
+    <div class="stat-sub">All time submissions</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Accepted</div>
+    <div class="stat-value">{{ acc_count }}</div>
+    <div class="stat-sub">Approved logs</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value">{{ pend_count }}</div>
+    <div class="stat-sub">Awaiting review</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label">Broadcasts</div>
+    <div class="stat-value">{{ broad_count }}</div>
+    <div class="stat-sub">Active announcements</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-label">Jobs Issued</div>
+    <div class="stat-value">{{ dir_count }}</div>
+    <div class="stat-sub">Active directives</div>
+  </div>
+</div>
+
+<!-- CHARTS ROW -->
+<div class="chart-row">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        Log Status Breakdown
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="statusChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Log Types
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="typeChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- DEPARTMENTS + QUICK NAV -->
+<div class="grid-2" style="margin-top: 24px;">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Departments
+      </div>
+    </div>
+    <div class="dept-grid">
+      <div class="dept-badge"><div class="dept-dot" style="background:#4f8ef7"></div>Investigation</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#22d3a0"></div>Sales</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#f5a623"></div>Marketing</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#a78bfa"></div>Support</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#f05a5a"></div>Development</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#34d399"></div>Moderation</div>
+      <div class="dept-badge"><div class="dept-dot" style="background:#fb923c"></div>Admin</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Recent Activity
+      </div>
+    </div>
+    <div class="recent-list">
+      {% set all_logs = (accepted_logs if accepted_logs is defined else []) + (pending_logs if pending_logs is defined else []) %}
+      {% for log in all_logs[:4] %}
+      <div class="recent-item">
+        <div class="recent-icon" style="background: {% if log.status == 'Accepted' %}var(--green-dim){% elif log.status == 'Denied' %}var(--red-dim){% else %}var(--amber-dim){% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{% if log.status == 'Accepted' %}var(--green){% elif log.status == 'Denied' %}var(--red){% else %}var(--amber){% endif %}" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div style="flex:1">
+          <div class="recent-title">{{ log.type }} Log · {{ log.username or 'Unknown' }}</div>
+          <div class="recent-meta">{{ log.timestamp or '—' }} · {{ log.status }}</div>
+        </div>
+        <span class="badge {% if log.status == 'Accepted' %}accepted{% elif log.status == 'Denied' %}denied{% else %}pending{% endif %}">
+          <span class="badge-dot"></span>{{ log.status }}
+        </span>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+        <p>No recent activity</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chartDefaults = {
+  plugins: { legend: { labels: { color: '#7a8499', font: { family: 'JetBrains Mono', size: 11 }, boxWidth: 12, padding: 16 } } }
+};
+
+{% set acc = accepted_logs|length if accepted_logs is defined else 0 %}
+{% set pend = pending_logs|length if pending_logs is defined else 0 %}
+{% set den = denied_logs|length if denied_logs is defined else 0 %}
+
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Accepted', 'Pending', 'Denied'],
+    datasets: [{
+      data: [{{ acc }}, {{ pend }}, {{ den }}],
+      backgroundColor: ['rgba(34,211,160,0.25)', 'rgba(245,166,35,0.25)', 'rgba(240,90,90,0.25)'],
+      borderColor: ['#22d3a0', '#f5a623', '#f05a5a'],
+      borderWidth: 1.5,
+    }]
+  },
+  options: { ...chartDefaults, cutout: '65%', maintainAspectRatio: false }
+});
+
+{% set sales_c = (sales_logs)|length %}
+{% set out_c = (outreach_logs)|length %}
+{% set giv_c = (giveaway_logs)|length %}
+{% set inv_c = (investigation_logs)|length %}
+
+const typeCtx = document.getElementById('typeChart').getContext('2d');
+new Chart(typeCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Sales', 'Outreach', 'Giveaway', 'Investigation'],
+    datasets: [{
+      data: [{{ sales_c }}, {{ out_c }}, {{ giv_c }}, {{ inv_c }}],
+      backgroundColor: ['rgba(79,142,247,0.25)', 'rgba(167,139,250,0.25)', 'rgba(245,166,35,0.25)', 'rgba(34,211,160,0.25)'],
+      borderColor: ['#4f8ef7', '#a78bfa', '#f5a623', '#22d3a0'],
+      borderWidth: 1.5,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    maintainAspectRatio: false,
+    scales: {
+      x: { grid: { color: '#1e2535' }, ticks: { color: '#7a8499', font: { family: 'JetBrains Mono', size: 10 } } },
+      y: { grid: { color: '#1e2535' }, ticks: { color: '#7a8499', font: { family: 'JetBrains Mono', size: 10 } } }
+    }
+  }
+});
+</script>
+{% endblock %}

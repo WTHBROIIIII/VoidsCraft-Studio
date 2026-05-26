@@ -1,0 +1,282 @@
+{% extends "development_manager/base_dev.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+{% block breadcrumb %}DASHBOARD{% endblock %}
+
+{% block head %}
+<style>
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+@media(max-width:1050px){.dash-grid{grid-template-columns:1fr}}
+
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.member-card{
+  background:var(--card2);border:1px solid var(--border);border-radius:var(--r3);
+  padding:16px 14px;display:flex;flex-direction:column;align-items:center;
+  gap:8px;text-align:center;transition:border-color .2s,transform .2s;position:relative;
+}
+.member-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.member-card.online{border-color:rgba(99,102,241,0.3)}
+.member-card.online:hover{border-color:rgba(99,102,241,0.55)}
+.prob-tag{
+  position:absolute;top:8px;right:8px;font-size:9px;font-family:var(--mono);
+  text-transform:uppercase;padding:2px 6px;border-radius:3px;
+  background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,0.3);
+}
+.m-av-wrap{position:relative}
+.m-av{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border2)}
+.member-card.online .m-av{border-color:var(--dv);box-shadow:0 0 0 3px var(--dv-dim)}
+.m-av-ph{
+  width:52px;height:52px;border-radius:50%;background:var(--dv-dim);
+  border:2px solid rgba(99,102,241,0.3);display:flex;align-items:center;
+  justify-content:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--dv);
+}
+.m-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card2)}
+.m-dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.m-dot.off{background:var(--text4)}
+.m-name{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.2;word-break:break-word}
+.m-status{font-size:10px;font-family:var(--mono);display:flex;align-items:center;gap:4px}
+.m-status.on{color:var(--dv)}
+.m-status.off{color:var(--text4)}
+.m-last{font-size:10px;color:var(--text4);font-family:var(--mono)}
+
+.overall-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ob{background:var(--card2);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center}
+.ob-val{font-family:var(--display);font-size:22px;font-weight:800;line-height:1}
+.ob-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+
+.cw{position:relative}
+.cw.h200{height:200px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leg-val{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:2px}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set acc   = accepted_logs | length %}
+{% set pend  = pending_logs  | length %}
+{% set den   = denied_logs   | length %}
+{% set total = acc + pend + den %}
+
+<div class="page-header">
+  <div>
+    <div class="page-eyebrow">Development Manager Portal</div>
+    <div class="page-title">Dev <span>Dashboard</span></div>
+    <div class="page-sub">Team activity and department overview.</div>
+  </div>
+</div>
+
+{# ── STAT CARDS ── #}
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-card dv">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+    </div>
+    <div class="stat-value" id="sTotal">—</div>
+    <div class="stat-label">Total Developers</div>
+    <div class="stat-sub">Department</div>
+  </div>
+
+  <div class="stat-card green">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="stat-value" id="sOnline">—</div>
+    <div class="stat-label">Online Now</div>
+    <div class="stat-sub">Last 30 min</div>
+  </div>
+
+  <div class="stat-card blue">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total Logs</div>
+    <div class="stat-sub">All time</div>
+  </div>
+
+  <div class="stat-card amber">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ pend }}</div>
+    <div class="stat-label">Pending</div>
+    <div class="stat-sub">Awaiting review</div>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  {# ── LEFT: MEMBER GRID ── #}
+  <div>
+    <div class="card card-dv">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Developer Members
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge dv" id="onlineBadge">— online</span>
+          <button class="btn btn-ghost btn-xs" onclick="loadMembers()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div id="memberGrid" class="member-grid">
+        {% for _ in range(6) %}
+        <div class="member-card">
+          <div class="skel" style="width:52px;height:52px;border-radius:50%"></div>
+          <div class="skel" style="height:10px;width:65%;margin-top:4px"></div>
+          <div class="skel" style="height:9px;width:40%;margin-top:4px"></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {# ── RIGHT: OVERALL + PIE ── #}
+  <div style="display:flex;flex-direction:column;gap:18px">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          Overall Activity
+        </div>
+      </div>
+      <div class="overall-grid">
+        <div class="ob"><div class="ob-val" style="color:var(--dv)">{{ total }}</div><div class="ob-lbl">Total</div></div>
+        <div class="ob"><div class="ob-val" style="color:var(--green)">{{ acc }}</div><div class="ob-lbl">Accepted</div></div>
+        <div class="ob"><div class="ob-val" style="color:var(--amber)">{{ pend }}</div><div class="ob-lbl">Pending</div></div>
+        <div class="ob"><div class="ob-val" style="color:var(--red)">{{ den }}</div><div class="ob-lbl">Denied</div></div>
+      </div>
+      {% if total > 0 %}
+      {% set acc_rate = ((acc / total * 100) | round(1)) %}
+      <div class="progress-bar-wrap">
+        <div class="pb-header">
+          <span class="pb-label">Acceptance Rate</span>
+          <span class="pb-val">{{ acc_rate }}%</span>
+        </div>
+        <div class="pb"><div class="pb-fill green" style="width:{{ acc_rate }}%"></div></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+          Log Status
+        </div>
+      </div>
+      {% if total > 0 %}
+      <div class="cw h200"><canvas id="actPie"></canvas></div>
+      <div class="chart-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Accepted<span class="leg-val">{{ acc }}</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pending<span class="leg-val">{{ pend }}</span></div>
+        <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Denied<span class="leg-val">{{ den }}</span></div>
+      </div>
+      {% else %}
+      <div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg></div>
+        <h3>No logs yet</h3>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% if (accepted_logs|length + pending_logs|length + denied_logs|length) > 0 %}
+(function(){
+  function rgba(hex,a){
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+a+')';
+  }
+  var g='#22d3a0', am='#f5a623', r='#f05a5a';
+  new Chart(document.getElementById('actPie').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Accepted','Pending','Denied'],
+      datasets:[{
+        data:[{{ accepted_logs|length }},{{ pending_logs|length }},{{ denied_logs|length }}],
+        backgroundColor:[rgba(g,.2),rgba(am,.2),rgba(r,.2)],
+        borderColor:[g,am,r],
+        borderWidth:1.5,
+        hoverOffset:6
+      }]
+    },
+    options:{
+      cutout:'65%',
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}
+      }
+    }
+  });
+})();
+{% endif %}
+
+function loadMembers(){
+  fetch('/api/dept-members/development')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var members=d.members||[];
+      var online=members.filter(function(m){return m.online;}).length;
+      document.getElementById('sTotal').textContent=members.length;
+      document.getElementById('sOnline').textContent=online;
+      document.getElementById('onlineBadge').textContent=online+' online';
+
+      var grid=document.getElementById('memberGrid');
+      if(!members.length){
+        grid.innerHTML='<div style="grid-column:1/-1"><div class="empty">'
+          +'<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>'
+          +'<h3>No members found</h3></div></div>';
+        return;
+      }
+      grid.innerHTML=members.map(function(m){
+        var init=(m.username||'?')[0].toUpperCase();
+        var av=m.pfp
+          ?'<img class="m-av" src="'+esc(m.pfp)+'" alt="'+esc(m.username)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+           +'<div class="m-av-ph" style="display:none">'+init+'</div>'
+          :'<div class="m-av-ph">'+init+'</div>';
+        return '<div class="member-card'+(m.online?' online':'')+'">'
+          +(m.probation?'<div class="prob-tag">Probation</div>':'')
+          +'<div class="m-av-wrap">'+av+'<div class="m-dot '+(m.online?'on':'off')+'"></div></div>'
+          +'<div class="m-name">'+esc(m.username)+'</div>'
+          +'<div class="m-status '+(m.online?'on':'off')+'">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>'
+          +(m.online?'Online':'Offline')+'</div>'
+          +(m.last_login?'<div class="m-last">'+esc(m.last_login)+'</div>':'')
+          +'</div>';
+      }).join('');
+    })
+    .catch(function(){
+      document.getElementById('sTotal').textContent='—';
+      document.getElementById('sOnline').textContent='—';
+      document.getElementById('memberGrid').innerHTML=
+        '<div style="grid-column:1/-1"><div class="empty">'
+        +'<p style="color:var(--text3)">Could not load members.</p>'
+        +'</div></div>';
+    });
+}
+loadMembers();
+</script>
+{% endblock %}

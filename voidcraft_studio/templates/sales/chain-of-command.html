@@ -1,0 +1,206 @@
+{% extends "sales/base_sales.html" %}
+{% block title %}Chain of Command{% endblock %}
+{% block tab_chain %}active{% endblock %}
+
+{% block head %}
+<style>
+.coc-wrap{max-width:760px;margin:0 auto}
+.coc-title{text-align:center;margin-bottom:32px}
+.coc-title h2{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+.coc-title p{font-size:13px;color:var(--text2)}
+
+/* Tree structure */
+.tree{display:flex;flex-direction:column;align-items:center;gap:0}
+.tree-node{display:flex;flex-direction:column;align-items:center;width:100%}
+.node-connector{width:2px;height:28px;background:linear-gradient(to bottom,var(--border2),var(--border));flex-shrink:0}
+.node-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r2);
+  padding:16px 20px;width:100%;max-width:460px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color .15s,transform .15s;position:relative;
+}
+.node-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.node-card.ceo{border-color:var(--accent);background:linear-gradient(135deg,var(--card) 0%,rgba(108,99,255,.08) 100%)}
+.node-card.sec{border-color:rgba(167,139,250,.3)}
+.node-card.mgr{border-color:rgba(79,142,247,.3)}
+.node-icon{
+  width:42px;height:42px;border-radius:var(--r);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.node-icon svg{width:20px;height:20px}
+.node-info{flex:1}
+.node-role{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:3px}
+.node-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
+.node-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.node-badge{position:absolute;top:12px;right:14px}
+
+/* Split nodes (same level) */
+.split-row{display:flex;gap:14px;width:100%;max-width:700px}
+.split-row .node-card{max-width:none;flex:1}
+.split-connector{display:flex;align-items:flex-start;width:100%;max-width:700px;position:relative;height:28px}
+.split-connector::before{content:'';position:absolute;top:0;left:50%;width:2px;height:100%;background:var(--border2);transform:translateX(-50%)}
+.split-connector::after{content:'';position:absolute;top:0;left:calc(25% + 7px);right:calc(25% + 7px);height:2px;background:var(--border);top:28px}
+
+/* Probation section */
+.prob-card{
+  background:linear-gradient(135deg,var(--amber-dim) 0%,rgba(245,166,35,.05) 100%);
+  border:1px solid var(--amber);border-radius:var(--r2);padding:20px;margin-top:24px;
+}
+.prob-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.prob-header svg{width:20px;height:20px;color:var(--amber)}
+.prob-header h3{font-size:15px;font-weight:700;color:var(--amber)}
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.prob-item{background:rgba(0,0,0,.2);border:1px solid rgba(245,166,35,.2);border-radius:var(--r);padding:12px}
+.prob-item-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:4px}
+.prob-item-val{font-size:13px;font-weight:600;color:var(--amber)}
+.prob-rules{margin-top:12px;font-size:12px;color:var(--text2);line-height:1.7}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set is_probation = 'probation' in (role or '') %}
+
+<div class="welcome">
+  <h1>Chain of Command</h1>
+  <p>Sales department hierarchy and organizational structure.</p>
+</div>
+
+<div class="coc-wrap">
+
+  <!-- CEO -->
+  <div class="tree">
+    <div class="tree-node">
+      <div class="node-card ceo">
+        <div class="node-icon" style="background:var(--accent-dim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><circle cx="12" cy="8" r="5"/><path d="M3 21v-2a7 7 0 0114 0v2"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 1 · Executive</div>
+          <div class="node-title">Chief Executive Officer</div>
+          <div class="node-desc">Oversees all studio operations. Final authority on all decisions.</div>
+        </div>
+        <div class="node-badge"><span class="badge accent"><span class="badge-dot"></span>CEO</span></div>
+      </div>
+    </div>
+
+    <div class="node-connector"></div>
+
+    <!-- SECRETARY -->
+    <div class="tree-node">
+      <div class="node-card sec">
+        <div class="node-icon" style="background:var(--purple-dim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 2 · Executive Support</div>
+          <div class="node-title">Secretary</div>
+          <div class="node-desc">Manages executive communications, records, and administrative affairs.</div>
+        </div>
+        <div class="node-badge"><span class="badge purple"><span class="badge-dot"></span>Secretary</span></div>
+      </div>
+    </div>
+
+    <div class="node-connector"></div>
+
+    <!-- OPERATIONS MANAGER -->
+    <div class="tree-node">
+      <div class="node-card mgr">
+        <div class="node-icon" style="background:var(--blue-dim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 3 · Management</div>
+          <div class="node-title">Operations Manager</div>
+          <div class="node-desc">Coordinates cross-department operations. Reports to CEO/Secretary.</div>
+        </div>
+        <div class="node-badge"><span class="badge" style="background:var(--blue-dim);color:var(--blue)"><span class="badge-dot"></span>Ops Mgr</span></div>
+      </div>
+    </div>
+
+    <div class="node-connector"></div>
+
+    <!-- SALES MANAGER -->
+    <div class="tree-node">
+      <div class="node-card" style="border-color:rgba(34,211,160,.3)">
+        <div class="node-icon" style="background:var(--green-dim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 4 · Department Lead</div>
+          <div class="node-title">Sales Manager</div>
+          <div class="node-desc">Leads the sales team. Assigns quotas, reviews logs, manages performance. Receives 20% oversight bonus.</div>
+        </div>
+        <div class="node-badge"><span class="badge green"><span class="badge-dot"></span>Sales Mgr</span></div>
+      </div>
+    </div>
+
+    <div class="node-connector"></div>
+
+    <!-- SPLIT: SENIOR + JUNIOR -->
+    <div style="display:flex;align-items:flex-start;width:100%;max-width:700px;position:relative;height:28px">
+      <div style="position:absolute;top:0;left:50%;width:2px;height:28px;background:var(--border2);transform:translateX(-50%)"></div>
+      <div style="position:absolute;top:27px;left:calc(25%);right:calc(25%);height:2px;background:var(--border2)"></div>
+    </div>
+
+    <div class="split-row">
+      <div class="node-card" style="border-color:rgba(245,166,35,.3)">
+        <div class="node-icon" style="background:var(--amber-dim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 5 · Senior</div>
+          <div class="node-title">Senior Sales</div>
+          <div class="node-desc">Experienced agents handling high-value leads. Mentors Junior Sales.</div>
+        </div>
+        <span class="badge amber" style="position:absolute;top:12px;right:12px"><span class="badge-dot"></span>Senior</span>
+      </div>
+
+      <div class="node-card" style="border-color:rgba(139,147,168,.25)">
+        <div class="node-icon" style="background:rgba(139,147,168,.1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+        </div>
+        <div class="node-info">
+          <div class="node-role">Tier 6 · Entry</div>
+          <div class="node-title">Junior Sales</div>
+          <div class="node-desc">Entry-level sales agents. Building quota and experience toward Senior.</div>
+        </div>
+        <span class="badge" style="position:absolute;top:12px;right:12px;background:rgba(139,147,168,.1);color:var(--text2)"><span class="badge-dot"></span>Junior</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROBATION INFO -->
+  <div class="prob-card">
+    <div class="prob-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <h3>Probation Period</h3>
+      {% if is_probation %}<span class="badge amber" style="margin-left:auto"><span class="badge-dot"></span>You are on probation</span>{% endif %}
+    </div>
+    <div class="prob-grid">
+      <div class="prob-item">
+        <div class="prob-item-label">Pay Adjustment</div>
+        <div class="prob-item-val">-30% from standard</div>
+      </div>
+      <div class="prob-item">
+        <div class="prob-item-label">Applied to</div>
+        <div class="prob-item-val">All roles &amp; departments</div>
+      </div>
+      <div class="prob-item">
+        <div class="prob-item-label">Probation role</div>
+        <div class="prob-item-val">Auto-assigned via Discord</div>
+      </div>
+      <div class="prob-item">
+        <div class="prob-item-label">Removal</div>
+        <div class="prob-item-val">By Sales Manager+</div>
+      </div>
+    </div>
+    <div class="prob-rules">
+      • Staff on probation receive <strong style="color:var(--amber)">30% less pay</strong> across all commission types, milestones, and bonuses.<br>
+      • The probation Discord role is assigned automatically on hire and removed by a manager upon completion.<br>
+      • Probation status is reflected on your portal profile and all pay displays.<br>
+      • Contact your <strong style="color:var(--text)">Sales Manager</strong> to review your probation status.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,264 @@
+{% extends "development_manager/base_dev.html" %}
+{% set page = 'analytics' %}
+{% block title %}Analytics{% endblock %}
+{% block tab_analytics %}active{% endblock %}
+{% block breadcrumb %}ANALYTICS{% endblock %}
+
+{{ super() }}
+{# ── DATA — defined at TOP LEVEL so available in ALL blocks ── #}
+{% set all_logs  = accepted_logs + pending_logs + denied_logs %}
+{% set acc       = accepted_logs|length %}
+{% set pend      = pending_logs|length %}
+{% set den       = denied_logs|length %}
+{% set total     = all_logs|length %}
+{% set acc_rate  = ((acc/total*100)|round(1))  if total>0 else 0 %}
+{% set pend_rate = ((pend/total*100)|round(1)) if total>0 else 0 %}
+{% set den_rate  = ((den/total*100)|round(1))  if total>0 else 0 %}
+
+{% set months = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'] %}
+{% set by_month = [] %}
+{% for m in months %}
+  {% set c=namespace(n=0) %}
+  {% for l in all_logs %}{% if l.timestamp and l.timestamp[:7]==m %}{% set c.n=c.n+1 %}{% endif %}{% endfor %}
+  {% set _=by_month.append(c.n) %}
+{% endfor %}
+
+{% set plist=[] %}
+{% for u,logs in all_logs|groupby('username') %}{% set _=plist.append({'name':u,'count':logs|list|length}) %}{% endfor %}
+{% set top_perf=plist|sort(attribute='count',reverse=True) %}
+{% set max_p=top_perf[0].count if top_perf else 1 %}
+
+{% block head %}
+{{ super() }}
+<style>
+  .ag  { display:grid; grid-template-columns:1fr 1fr;     gap:18px; margin-bottom:18px; }
+  .ag3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
+  .af  { display:grid; grid-template-columns:1fr;         gap:18px; margin-bottom:18px; }
+  @media(max-width:1050px){ .ag3 { grid-template-columns:1fr 1fr; } }
+  @media(max-width:750px) { .ag,.ag3 { grid-template-columns:1fr; } }
+
+  .cw { position:relative; width:100%; }
+  .cw.h200 { height:200px; }
+  .cw.h260 { height:260px; }
+
+  /* KPI */
+  .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+  @media(max-width:900px){ .kpi-row { grid-template-columns:repeat(2,1fr); } }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:var(--r3); padding:16px 18px; position:relative; overflow:hidden; transition:border-color .2s,transform .2s; }
+  .kpi:hover { border-color:var(--border2); transform:translateY(-1px); }
+  .kpi::before { content:''; position:absolute; top:0; right:0; width:60px; height:60px; border-radius:50%; filter:blur(20px); opacity:.5; pointer-events:none; }
+  .kpi.k-dv::before    { background:var(--dv); }
+  .kpi.k-green::before { background:var(--green); }
+  .kpi.k-blue::before  { background:var(--blue); }
+  .kpi.k-amber::before { background:var(--amber); }
+  .kpi-lbl { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+  .kpi-val { font-family:var(--display); font-size:28px; font-weight:800; line-height:1; letter-spacing:-.03em; margin-bottom:3px; }
+  .kpi.k-dv    .kpi-val { color:var(--dv); }
+  .kpi.k-green .kpi-val { color:var(--green); }
+  .kpi.k-blue  .kpi-val { color:var(--blue); }
+  .kpi.k-amber .kpi-val { color:var(--amber); }
+  .kpi-sub { font-size:10px; color:var(--text3); font-family:var(--mono); }
+
+  /* legend */
+  .chart-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .leg-item { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text2); }
+  .leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .leg-val { font-family:var(--mono); font-size:11px; color:var(--text3); margin-left:2px; }
+
+  /* performers */
+  .perf-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); }
+  .perf-row:last-child { border-bottom:none; }
+  .perf-rank { font-family:var(--mono); font-size:11px; color:var(--text4); width:18px; text-align:center; flex-shrink:0; }
+  .perf-rank.r1 { color:var(--dv); font-weight:700; }
+  .perf-rank.r2 { color:var(--text2); }
+  .perf-rank.r3 { color:var(--amber); }
+  .perf-name { flex:1; font-size:13px; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .perf-bar-wrap { width:80px; height:5px; background:var(--card3); border-radius:3px; overflow:hidden; }
+  .perf-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--dv2),var(--dv)); }
+  .perf-count { font-family:var(--mono); font-size:11px; color:var(--dv); width:24px; text-align:right; flex-shrink:0; }
+
+  /* member analytics list */
+  .ma-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+  .ma-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--r2); padding:12px; display:flex; align-items:center; gap:10px; transition:border-color .15s; }
+  .ma-card:hover { border-color:var(--border2); }
+  .ma-card.is-on { border-color:rgba(99,102,241,0.25); }
+  .ma-pfp { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--border2); flex-shrink:0; }
+  .ma-pfp.on { border-color:var(--dv); }
+  .ma-pfp-ph { width:34px; height:34px; border-radius:50%; background:var(--dv-dim); border:2px solid rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--dv); flex-shrink:0; }
+  .ma-name { font-size:12px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ma-stat { font-size:10px; font-family:var(--mono); }
+  .ma-stat.on  { color:var(--dv); }
+  .ma-stat.off { color:var(--text4); }
+
+  .sec-ey { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--text3); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .sec-ey::after { content:''; flex:1; height:1px; background:var(--border); }
+  .no-data { display:flex; flex-direction:column; align-items:center; justify-content:center; height:120px; color:var(--text4); font-size:12px; font-family:var(--mono); gap:6px; }
+  .no-data svg { width:24px; height:24px; opacity:.4; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-eyebrow">Development Manager Portal</div>
+    <div class="page-title">Analytics <span>&amp; Insights</span></div>
+    <div class="page-sub">Full activity and membership overview for the Development department.</div>
+  </div>
+</div>
+
+{# ── KPIs ── #}
+<div class="kpi-row">
+  <div class="kpi k-dv">   <div class="kpi-lbl">Total Members</div>   <div class="kpi-val" id="kTotal">—</div>  <div class="kpi-sub">Dev dept</div></div>
+  <div class="kpi k-green"><div class="kpi-lbl">Online Now</div>       <div class="kpi-val" id="kOnline">—</div> <div class="kpi-sub">Last 30 min</div></div>
+  <div class="kpi k-blue"> <div class="kpi-lbl">Total Logs</div>       <div class="kpi-val">{{ total }}</div>    <div class="kpi-sub">All time</div></div>
+  <div class="kpi k-amber"><div class="kpi-lbl">Pending</div>          <div class="kpi-val">{{ pend }}</div>     <div class="kpi-sub">Awaiting review</div></div>
+</div>
+
+{# ── PIE CHARTS ── #}
+<div class="sec-ey">Status Breakdown</div>
+<div class="ag3">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>Log Status</div></div>
+    {% if total>0 %}
+    <div class="cw h200"><canvas id="logPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Accepted<span class="leg-val">{{ acc }}</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pending<span class="leg-val">{{ pend }}</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Denied<span class="leg-val">{{ den }}</span></div>
+    </div>
+    {% else %}<div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Member Status</div></div>
+    <div class="cw h200"><canvas id="memberPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--dv)"></div>Online<span class="leg-val" id="legOn">—</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--text3)"></div>Offline<span class="leg-val" id="legOff">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>Approval Split</div></div>
+    {% if total>0 %}
+    <div class="cw h200"><canvas id="approvalPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--dv)"></div>Accepted<span class="leg-val">{{ acc_rate }}%</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pending<span class="leg-val">{{ pend_rate }}%</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Denied<span class="leg-val">{{ den_rate }}%</span></div>
+    </div>
+    {% else %}<div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>{% endif %}
+  </div>
+</div>
+
+{# ── MONTHLY BAR ── #}
+<div class="sec-ey">Monthly Activity</div>
+<div class="af">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Logs by Month — 2026</div></div>
+    <div class="cw h260"><canvas id="monthlyBar"></canvas></div>
+    <div class="chart-legend" style="margin-top:14px"><div class="leg-item"><div class="leg-dot" style="background:var(--dv)"></div>Logs submitted</div></div>
+  </div>
+</div>
+
+{# ── TOP PERFORMERS + APPROVAL RATES ── #}
+<div class="sec-ey">Performance</div>
+<div class="ag">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Top Performers</div></div>
+    {% if top_perf %}
+      {% for p in top_perf[:8] %}
+      <div class="perf-row">
+        <div class="perf-rank {% if loop.index==1 %}r1{% elif loop.index==2 %}r2{% elif loop.index==3 %}r3{% endif %}">{{ loop.index }}</div>
+        <div class="perf-name">{{ p.name }}</div>
+        <div class="perf-bar-wrap"><div class="perf-bar-fill" style="width:{{ ((p.count/max_p)*100)|round }}%"></div></div>
+        <div class="perf-count">{{ p.count }}</div>
+      </div>
+      {% endfor %}
+    {% else %}<div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>No logs yet</div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Approval Rates</div></div>
+    <div style="display:flex;flex-direction:column;gap:16px;padding:4px 0">
+      {% for lbl,val,col,cnt in [('Accepted',acc_rate,'var(--green)',acc),('Pending',pend_rate,'var(--amber)',pend),('Denied',den_rate,'var(--red)',den)] %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">{{ lbl }}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:{{ col }}">{{ cnt }} / {{ total }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:{{ col }};border-radius:4px;width:{{ val }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ val }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# ── ALL MEMBERS ── #}
+<div class="sec-ey">Department Members</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>All Developers</div>
+    <button class="btn btn-ghost btn-xs" onclick="loadMembers()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Refresh
+    </button>
+  </div>
+  <div id="maGrid" class="ma-grid">
+    {% for _ in range(6) %}<div class="ma-card"><div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:5px"><div class="skel" style="height:10px;width:80%"></div><div class="skel" style="height:9px;width:50%"></div></div></div>{% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function rgba(hex,a){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return 'rgba('+r+','+g+','+b+','+a+')';}
+var dv='#6366f1',green='#22d3a0',amber='#f5a623',red='#f05a5a',t3='#454b68';
+var pieOpts=function(){return{cutout:'65%',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}}};};
+
+{% if total > 0 %}
+new Chart(document.getElementById('logPie').getContext('2d'),{type:'doughnut',data:{labels:['Accepted','Pending','Denied'],datasets:[{data:[{{ acc }},{{ pend }},{{ den }}],backgroundColor:[rgba(green,.2),rgba(amber,.2),rgba(red,.2)],borderColor:[green,amber,red],borderWidth:1.5,hoverOffset:6}]},options:pieOpts()});
+new Chart(document.getElementById('approvalPie').getContext('2d'),{type:'doughnut',data:{labels:['Accepted','Pending','Denied'],datasets:[{data:[{{ acc_rate }},{{ pend_rate }},{{ den_rate }}],backgroundColor:[rgba(dv,.2),rgba(amber,.2),rgba(red,.2)],borderColor:[dv,amber,red],borderWidth:1.5,hoverOffset:6}]},options:pieOpts()});
+{% endif %}
+
+var memberPieChart=new Chart(document.getElementById('memberPie').getContext('2d'),{type:'doughnut',data:{labels:['Online','Offline'],datasets:[{data:[0,1],backgroundColor:[rgba(dv,.2),rgba(t3,.2)],borderColor:[dv,t3],borderWidth:1.5,hoverOffset:6}]},options:pieOpts()});
+
+new Chart(document.getElementById('monthlyBar').getContext('2d'),{
+  type:'bar',
+  data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[{label:'Logs',data:{{ by_month|tojson }},backgroundColor:rgba(dv,.25),borderColor:dv,borderWidth:1.5,borderRadius:4,borderSkipped:false}]},
+  options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{x:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11}}},y:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11},stepSize:1,precision:0},beginAtZero:true}},plugins:{legend:{display:false}}}
+});
+
+function loadMembers(){
+  fetch('/api/dept-members/development')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var m=d.members||[];
+      var on=m.filter(function(x){return x.online;}).length;
+      document.getElementById('kTotal').textContent=m.length;
+      document.getElementById('kOnline').textContent=on;
+      document.getElementById('legOn').textContent=on;
+      document.getElementById('legOff').textContent=m.length-on;
+      memberPieChart.data.datasets[0].data=[on,m.length-on];
+      memberPieChart.update();
+      var g=document.getElementById('maGrid');
+      if(!m.length){g.innerHTML='<div style="grid-column:1/-1"><div class="empty"><p style="color:var(--text3)">No members found.</p></div></div>';return;}
+      g.innerHTML=m.map(function(x){
+        var init=(x.username||'?')[0].toUpperCase();
+        var av=x.pfp?'<img class="ma-pfp'+(x.online?' on':'')+'" src="'+esc(x.pfp)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+'<div class="ma-pfp-ph" style="display:none">'+init+'</div>':'<div class="ma-pfp-ph">'+init+'</div>';
+        return '<div class="ma-card'+(x.online?' is-on':'')+'">'
+          +av
+          +'<div><div class="ma-name">'+esc(x.username)+'</div><div class="ma-stat '+(x.online?'on':'off')+'">'+(x.online?'● Online':'○ Offline')+'</div></div>'
+          +'</div>';
+      }).join('');
+    })
+    .catch(function(){document.getElementById('maGrid').innerHTML='<div style="grid-column:1/-1"><div class="empty"><p style="color:var(--text3)">Could not load.</p></div></div>';});
+}
+loadMembers();
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "development/base_development.html" %}
+{% block title %}Information{% endblock %}
+{% block tab_info %}active{% endblock %}
+
+{% block head %}
+<style>
+.info-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.info-2col{grid-template-columns:1fr}}
+.pay-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;transition:border-color .15s}
+.pay-row:hover{border-color:var(--border2)}
+.rule-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.6}
+.rule-item:last-child{border-bottom:none}
+.rule-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.rule-icon svg{width:12px;height:12px}
+.server-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,rgba(167,139,250,.1) 0%,rgba(79,142,247,.06) 100%);border:1px solid rgba(167,139,250,.3);border-radius:var(--r2);text-decoration:none;transition:all .15s;margin-bottom:20px}
+.server-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.warn-box{background:var(--red-dim);border:1px solid rgba(240,90,90,.3);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--red);display:flex;gap:8px;align-items:flex-start}
+.warn-box svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+<div class="welcome">
+  <h1>Information & Pay Rates</h1>
+  <p>Commission rates, task job rules, AI policy, and quota details.</p>
+</div>
+
+<!-- SERVER LINK -->
+<a href="https://discord.gg/ruaWHxFPEF" target="_blank" class="server-btn">
+  <svg viewBox="0 0 71 55" fill="currentColor" style="width:20px;height:20px;color:var(--accent)"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+  <div style="flex:1">
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px">Development Server — discord.gg/ruaWHxFPEF</div>
+    <div style="font-size:11px;color:var(--text2)">All dev projects, task jobs, logs, and announcements happen here. Joining is <strong style="color:var(--red)">mandatory</strong>.</div>
+  </div>
+  <div style="color:var(--accent);font-size:18px">↗</div>
+</a>
+
+<div class="info-2col">
+  <!-- PAY RATES -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Commission Rates (% of Final Price)
+      {% if prob %}<span class="badge amber" style="margin-left:auto">−30%</span>{% endif %}
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Pay is <strong style="color:var(--text)">monthly</strong>. Rates apply to the final price agreed for each custom order.</div>
+
+    <div class="pay-row" style="border-color:rgba(139,147,168,.15)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Junior Developer</div>
+        <div style="font-size:11px;color:var(--text2)">Entry level commission</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--text2)">{% if prob %}45.5%{% else %}65%{% endif %}</div>
+        {% if prob %}<div style="font-size:10px;color:var(--amber);font-family:var(--mono)">std: 65%</div>{% endif %}
+      </div>
+    </div>
+    <div class="pay-row" style="border-color:rgba(167,139,250,.2)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Developer</div>
+        <div style="font-size:11px;color:var(--text2)">Standard commission</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--accent)">{% if prob %}49%{% else %}70%{% endif %}</div>
+        {% if prob %}<div style="font-size:10px;color:var(--amber);font-family:var(--mono)">std: 70%</div>{% endif %}
+      </div>
+    </div>
+    <div class="pay-row" style="border-color:rgba(79,142,247,.2)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Senior Developer</div>
+        <div style="font-size:11px;color:var(--text2)">Senior commission</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--blue)">{% if prob %}52.5%{% else %}75%{% endif %}</div>
+        {% if prob %}<div style="font-size:10px;color:var(--amber);font-family:var(--mono)">std: 75%</div>{% endif %}
+      </div>
+    </div>
+    <div class="pay-row" style="border-color:rgba(34,211,160,.25);background:rgba(34,211,160,.03)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Development Management</div>
+        <div style="font-size:11px;color:var(--text2)">+ Base 275R$/month</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--green)">{% if prob %}52.5%{% else %}75%{% endif %}</div>
+        {% if prob %}<div style="font-size:10px;color:var(--amber);font-family:var(--mono)">base: {% if prob %}192.5R${% else %}275R${% endif %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        AI & Code Policy
+      </div>
+      <div class="warn-box" style="margin-bottom:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span><strong>NO AI-generated code</strong> for products. No copying from YouTube or other sources.</span>
+      </div>
+      <div class="warn-box" style="margin-bottom:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span>Violation = pay <strong>200% of product price with tax</strong>. Declining = mass blacklisted for scamming.</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);padding:8px 10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">Free models are not allowed unless specifically instructed by management.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Quota (Every 15 Days)
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon" style="background:var(--accent-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span><strong style="color:var(--text)">1 task job</strong> every fortnight — always mandatory.</span>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon" style="background:var(--blue-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span><strong style="color:var(--text)">1 commission</strong> every fortnight — mandatory unless none were available.</span>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon" style="background:var(--amber-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg></div>
+        <span>Commissions vary — quota is kept lenient. Log everything with <strong style="color:var(--text)">4+ screenshots</strong> as proof.</span>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon" style="background:var(--red-dim)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+        <span>Once advance is taken on a commission, <strong style="color:var(--red)">you cannot back out</strong>. Return money + tax if you do.</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

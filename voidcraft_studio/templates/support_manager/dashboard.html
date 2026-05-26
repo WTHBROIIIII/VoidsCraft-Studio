@@ -1,0 +1,295 @@
+{% extends "support_manager/base_support.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+.dash-grid{display:grid;grid-template-columns:1fr 300px;gap:18px}
+@media(max-width:1050px){.dash-grid{grid-template-columns:1fr}}
+.col-main{display:flex;flex-direction:column;gap:18px}
+.col-side{display:flex;flex-direction:column;gap:18px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:800px){.kpi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r3);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;filter:blur(20px);opacity:.5;pointer-events:none}
+.kpi-card.k-teal::before{background:var(--sp)}
+.kpi-card.k-green::before{background:var(--green)}
+.kpi-card.k-blue::before{background:var(--blue)}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:6px}
+.kpi-val{font-family:var(--display);font-size:28px;font-weight:800;line-height:1;letter-spacing:-.03em;margin-bottom:3px}
+.kpi-card.k-teal  .kpi-val{color:var(--sp)}
+.kpi-card.k-green .kpi-val{color:var(--green)}
+.kpi-card.k-blue  .kpi-val{color:var(--blue)}
+.kpi-sub{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
+.member-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r3);padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:border-color .2s,transform .2s;position:relative}
+.member-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.member-card.online-card{border-color:rgba(45,212,191,0.3)}
+.member-card.online-card:hover{border-color:rgba(45,212,191,0.55)}
+.probation-ribbon{position:absolute;top:8px;right:8px;font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:3px;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,0.3)}
+.m-avatar-wrap{position:relative}
+.m-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border2)}
+.online-card .m-avatar{border-color:var(--sp);box-shadow:0 0 0 3px rgba(45,212,191,0.15)}
+.m-avatar-ph{width:52px;height:52px;border-radius:50%;background:var(--sp-dim);border:2px solid rgba(45,212,191,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--sp);font-family:var(--display)}
+.m-dot{position:absolute;bottom:1px;right:1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--card2)}
+.m-dot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.m-dot.off{background:var(--text4)}
+.m-name{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.2;word-break:break-word}
+.m-status{font-size:10px;font-family:var(--mono);display:flex;align-items:center;gap:4px}
+.m-status.on{color:var(--sp)}
+.m-status.off{color:var(--text4)}
+.m-last{font-size:10px;color:var(--text4);font-family:var(--mono)}
+
+.skel{background:linear-gradient(90deg,var(--card2) 25%,var(--card3) 50%,var(--card2) 75%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:var(--r)}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.sp-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--sp);background:var(--sp-dim);padding:3px 10px;border-radius:20px;border:1px solid rgba(45,212,191,0.25)}
+.sp-dot{width:6px;height:6px;border-radius:50%;background:var(--sp);box-shadow:0 0 5px var(--sp);animation:pulse-sp 2s ease-in-out infinite}
+@keyframes pulse-sp{0%,100%{opacity:1}50%{opacity:.4}}
+
+.bar-wrap{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.bar-wrap:last-child{margin-bottom:0}
+.bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.bar-label{font-size:11.5px;color:var(--text2)}
+.bar-val{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.bar-track{height:6px;background:var(--card3);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.bar-fill.sp{background:linear-gradient(90deg,var(--sp2),var(--sp))}
+.bar-fill.off{background:var(--text3)}
+.bar-fill.amber{background:var(--amber)}
+
+.online-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.online-row:last-child{border-bottom:none}
+.online-init{width:28px;height:28px;border-radius:50%;background:var(--sp-dim);border:1.5px solid rgba(45,212,191,0.4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sp);flex-shrink:0;font-family:var(--display)}
+.online-name{flex:1;font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.online-ping{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);flex-shrink:0}
+
+.loading-spin{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--sp);animation:spin .6s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.sec-eyebrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-eyebrow::after{content:'';flex:1;height:1px;background:var(--border)}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── HEADER ── #}
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Support Manager Portal</div>
+    <div class="page-title">Support <span>Dashboard</span></div>
+    <div class="page-sub">Live overview of your support team.</div>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="loadMembers()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+  </div>
+</div>
+
+{# ── KPI CARDS ── #}
+<div class="kpi-grid">
+  <div class="kpi-card k-teal">
+    <div class="kpi-label">Total Members</div>
+    <div class="kpi-val" id="kTotal">—</div>
+    <div class="kpi-sub">Support department</div>
+  </div>
+  <div class="kpi-card k-green">
+    <div class="kpi-label">Online Now</div>
+    <div class="kpi-val" id="kOnline">—</div>
+    <div class="kpi-sub">Currently active</div>
+  </div>
+  <div class="kpi-card k-blue">
+    <div class="kpi-label">Offline</div>
+    <div class="kpi-val" id="kOffline">—</div>
+    <div class="kpi-sub">Not active</div>
+  </div>
+</div>
+
+{# ── MAIN GRID ── #}
+<div class="dash-grid">
+
+  {# ── LEFT: MEMBER GRID ── #}
+  <div class="col-main">
+    <div class="card card-sp">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Active Members
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="sp-badge"><span class="sp-dot"></span><span id="onlineBadge">— online</span></span>
+        </div>
+      </div>
+
+      <div id="memberLoading" style="text-align:center;padding:32px 0">
+        <div class="loading-spin"></div>
+        <p style="margin-top:10px;font-size:12px;color:var(--text3)">Loading team…</p>
+      </div>
+
+      <div id="memberGrid" class="member-grid" style="display:none"></div>
+
+      <div id="memberError" style="display:none">
+        <div class="empty">
+          <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+          <h3>Could not load team</h3>
+          <p>Check the bot is running.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── RIGHT: SIDE PANEL ── #}
+  <div class="col-side">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Team Status
+        </div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-header">
+          <span class="bar-label">Online</span>
+          <span class="bar-val" id="onlineRateLbl">—</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill sp" id="onlineBar" style="width:0%"></div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-header">
+          <span class="bar-label">Offline</span>
+          <span class="bar-val" id="offlineRateLbl">—</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill off" id="offlineBar" style="width:0%"></div></div>
+      </div>
+      <div class="bar-wrap" id="probationBarWrap" style="display:none">
+        <div class="bar-header">
+          <span class="bar-label">On Probation</span>
+          <span class="bar-val" id="probationLbl">0</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill amber" id="probationBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Online Staff
+        </div>
+      </div>
+      <div id="onlineList">
+        <p style="font-size:12px;color:var(--text3);text-align:center;padding:16px 0">Loading…</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function loadMembers(){
+  document.getElementById('memberLoading').style.display='block';
+  document.getElementById('memberGrid').style.display='none';
+  document.getElementById('memberError').style.display='none';
+
+  fetch('/api/dept-members/support')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var members = d.members || [];
+      var online  = members.filter(function(m){return m.online;}).length;
+      var offline = members.length - online;
+      var prob    = members.filter(function(m){return m.probation;}).length;
+      var total   = members.length;
+
+      /* KPIs */
+      document.getElementById('kTotal').textContent   = total;
+      document.getElementById('kOnline').textContent  = online;
+      document.getElementById('kOffline').textContent = offline;
+      document.getElementById('onlineBadge').textContent = online + ' online';
+
+      /* status bars */
+      var onPct  = total > 0 ? Math.round(online/total*100)  : 0;
+      var offPct = total > 0 ? Math.round(offline/total*100) : 0;
+      var prPct  = total > 0 ? Math.round(prob/total*100)    : 0;
+      document.getElementById('onlineRateLbl').textContent  = onPct  + '% (' + online  + ')';
+      document.getElementById('offlineRateLbl').textContent = offPct + '% (' + offline + ')';
+      document.getElementById('onlineBar').style.width  = onPct  + '%';
+      document.getElementById('offlineBar').style.width = offPct + '%';
+      if(prob > 0){
+        document.getElementById('probationBarWrap').style.display = 'block';
+        document.getElementById('probationLbl').textContent = prob;
+        document.getElementById('probationBar').style.width = prPct + '%';
+      }
+
+      /* online staff list */
+      var onlineMembers = members.filter(function(m){return m.online;});
+      var olEl = document.getElementById('onlineList');
+      if(!onlineMembers.length){
+        olEl.innerHTML = '<p style="font-size:12px;color:var(--text3);text-align:center;padding:10px 0">No one online right now.</p>';
+      } else {
+        olEl.innerHTML = onlineMembers.map(function(m){
+          var init = (m.username||'?')[0].toUpperCase();
+          return '<div class="online-row">'
+            +'<div class="online-init">'+init+'</div>'
+            +'<div class="online-name">'+esc(m.username)+'</div>'
+            +'<div class="online-ping"></div>'
+            +'</div>';
+        }).join('');
+      }
+
+      /* member grid */
+      document.getElementById('memberLoading').style.display = 'none';
+      var grid = document.getElementById('memberGrid');
+      if(!members.length){
+        grid.innerHTML = '<div style="grid-column:1/-1"><div class="empty">'
+          +'<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>'
+          +'<h3>No members found</h3><p>No one in the support department yet.</p></div></div>';
+        grid.style.display = 'grid';
+        return;
+      }
+      grid.innerHTML = members.map(function(m){
+        var init   = (m.username||'?')[0].toUpperCase();
+        var avatar = m.pfp
+          ? '<img class="m-avatar" src="'+esc(m.pfp)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+            +'<div class="m-avatar-ph" style="display:none">'+init+'</div>'
+          : '<div class="m-avatar-ph">'+init+'</div>';
+        return '<div class="member-card'+(m.online?' online-card':'')+'">'
+          +(m.probation?'<div class="probation-ribbon">Probation</div>':'')
+          +'<div class="m-avatar-wrap">'+avatar
+          +'<div class="m-dot '+(m.online?'on':'off')+'"></div></div>'
+          +'<div class="m-name">'+esc(m.username)+'</div>'
+          +'<div class="m-status '+(m.online?'on':'off')+'">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span>'
+          +(m.online?'Online':'Offline')+'</div>'
+          +(m.last_login?'<div class="m-last">'+esc(m.last_login)+'</div>':'')
+          +'</div>';
+      }).join('');
+      grid.style.display = 'grid';
+    })
+    .catch(function(){
+      document.getElementById('memberLoading').style.display = 'none';
+      document.getElementById('memberError').style.display   = 'block';
+      document.getElementById('kTotal').textContent   = '—';
+      document.getElementById('kOnline').textContent  = '—';
+      document.getElementById('kOffline').textContent = '—';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadMembers);
+setInterval(loadMembers, 60000);
+</script>
+{% endblock %}

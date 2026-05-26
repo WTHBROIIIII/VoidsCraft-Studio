@@ -1,0 +1,285 @@
+{% extends "marketing_manager/base_marketing.html" %}
+{% set page = 'dashboard' %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+{% block breadcrumb %}DASHBOARD{% endblock %}
+
+{% block head %}
+<style>
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+@media(max-width:1050px){.dash-grid{grid-template-columns:1fr}}
+.col-main{display:flex;flex-direction:column;gap:18px}
+.col-side{display:flex;flex-direction:column;gap:18px}
+.member-list{display:flex;flex-direction:column;gap:8px}
+.member-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r2);background:var(--card2);border:1px solid var(--border);transition:border-color .15s}
+.member-item:hover{border-color:var(--border2)}
+.member-pfp{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border2);flex-shrink:0}
+.member-pfp-ph{width:30px;height:30px;border-radius:50%;background:var(--mk-dim);border:1.5px solid rgba(167,139,250,0.3);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;font-weight:700;color:var(--mk);flex-shrink:0}
+.member-info{flex:1;min-width:0}
+.member-name{font-size:12.5px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.skel{background:linear-gradient(90deg,var(--card2) 25%,var(--card3) 50%,var(--card2) 75%);background-size:200% 100%;animation:skel 1.4s infinite;border-radius:var(--r)}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.tab-bar{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{padding:5px 12px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--font);transition:all .15s}
+.tab-btn:hover{border-color:var(--border2);color:var(--text)}
+.tab-btn.active{background:var(--mk-dim);border-color:rgba(167,139,250,0.35);color:var(--mk)}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-row input{background:var(--input);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;width:160px;transition:border-color .15s}
+.filter-row input:focus{border-color:var(--mk)}
+.proof-link{color:var(--mk);font-size:11px;font-family:var(--mono);text-decoration:none}
+.proof-link:hover{text-decoration:underline}
+.progress-wrap{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.progress-wrap:last-child{margin-bottom:0}
+.progress-header{display:flex;align-items:center;justify-content:space-between}
+.progress-label{font-size:11.5px;color:var(--text2)}
+.progress-val{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.progress-bar{height:5px;background:var(--card3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.progress-fill.mk{background:linear-gradient(90deg,var(--accent),var(--mk))}
+.progress-fill.green{background:var(--green)}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set all_give  = giveaway_logs %}
+{% set acc_give  = accepted_giveaway %}
+{% set pend_give = pending_logs | selectattr('type','equalto','Giveaway') | list %}
+{% set den_give  = denied_logs  | selectattr('type','equalto','Giveaway') | list %}
+
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Marketing Manager Portal</div>
+    <div class="page-title">Marketing <span>Dashboard</span></div>
+    <div class="page-sub">Overview of your team's giveaway activity.</div>
+  </div>
+</div>
+
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-card purple">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ all_give|length }}</div>
+    <div class="stat-label">Total Giveaways</div>
+    <div class="stat-sub">All time</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ acc_give|length }}</div>
+    <div class="stat-label">Giveaways Accepted</div>
+    <div class="stat-sub">Approved</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ pend_give|length }}</div>
+    <div class="stat-label">Pending Review</div>
+    <div class="stat-sub">Awaiting action</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-top">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ den_give|length }}</div>
+    <div class="stat-label">Denied</div>
+    <div class="stat-sub">Rejected logs</div>
+  </div>
+</div>
+
+<div class="dash-grid">
+  <div class="col-main">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          Giveaway Logs
+        </div>
+        <div class="filter-row">
+          <input type="text" id="giveSearch" placeholder="Search…" oninput="filterGive()"/>
+        </div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchGiveTab('all',this)">All</button>
+        <button class="tab-btn" onclick="switchGiveTab('Accepted',this)">Accepted</button>
+        <button class="tab-btn" onclick="switchGiveTab('Pending',this)">Pending</button>
+        <button class="tab-btn" onclick="switchGiveTab('Denied',this)">Denied</button>
+      </div>
+      <div class="table-wrap">
+        <table id="giveTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Staff</th>
+              <th>Prize</th>
+              <th>Winners</th>
+              <th>Proof</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in all_give %}
+            <tr data-status="{{ log.status }}" data-user="{{ log.username }}">
+              <td class="td-mono" style="color:var(--text3)">{{ log.id }}</td>
+              <td style="color:var(--text);font-weight:500">{{ log.username or '—' }}</td>
+              <td>{{ (log.details.prize   if log.details is mapping else '—') or '—' }}</td>
+              <td>{{ (log.details.winners if log.details is mapping else '—') or '—' }}</td>
+              <td>
+                {% if log.proof %}
+                  <a href="{{ log.proof }}" target="_blank" class="proof-link">View ↗</a>
+                {% else %}
+                  <span style="color:var(--text3)">—</span>
+                {% endif %}
+              </td>
+              <td class="td-mono" style="color:var(--text3)">{{ log.timestamp or '—' }}</td>
+              <td>
+                <span class="badge {% if log.status=='Accepted' %}accepted{% elif log.status=='Denied' %}denied{% else %}pending{% endif %}">
+                  <span class="badge-dot"></span>{{ log.status or 'Pending' }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7"><div class="empty"><p>No giveaway logs yet.</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-side">
+    <div class="card card-mk">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Active Members
+        </div>
+        <button class="btn btn-ghost btn-xs" onclick="loadMembers()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Refresh
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div style="flex:1;text-align:center;background:var(--card2);border:1px solid var(--border);border-radius:var(--r2);padding:10px">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total</div>
+          <div id="mTotal" style="font-size:20px;font-weight:800;font-family:var(--display);color:var(--text)">—</div>
+        </div>
+        <div style="flex:1;text-align:center;background:var(--card2);border:1px solid var(--border);border-radius:var(--r2);padding:10px">
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Online</div>
+          <div id="mOnline" style="font-size:20px;font-weight:800;font-family:var(--display);color:var(--green)">—</div>
+        </div>
+      </div>
+      <div id="memberList" class="member-list">
+        {% for _ in range(5) %}
+        <div class="member-item">
+          <div class="skel" style="width:30px;height:30px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+            <div class="skel" style="height:10px;width:70%"></div>
+            <div class="skel" style="height:9px;width:45%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Approval Rates
+        </div>
+      </div>
+      {% set give_rate = ((acc_give|length / all_give|length * 100)|round(1)) if all_give|length > 0 else 0 %}
+      {% set pend_rate = ((pend_give|length / all_give|length * 100)|round(1)) if all_give|length > 0 else 0 %}
+      {% set deny_rate = ((den_give|length  / all_give|length * 100)|round(1)) if all_give|length > 0 else 0 %}
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Accepted</span>
+          <span class="progress-val">{{ give_rate }}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill mk" style="width:{{ give_rate }}%"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Pending</span>
+          <span class="progress-val">{{ pend_rate }}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:{{ pend_rate }}%;background:var(--amber)"></div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Denied</span>
+          <span class="progress-val">{{ deny_rate }}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:{{ deny_rate }}%;background:var(--red)"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function filterGive(force){
+  var search=(document.getElementById('giveSearch').value||'').toLowerCase();
+  var active=document.querySelector('#giveTable').closest('.card').querySelector('.tab-btn.active');
+  var status=force!==undefined?force:(active?active.textContent.trim():'all');
+  document.querySelectorAll('#giveTable tbody tr[data-status]').forEach(function(r){
+    var mS=status==='all'||(r.dataset.status||'')===status;
+    var mU=!search||(r.dataset.user||'').toLowerCase().includes(search);
+    r.style.display=(mS&&mU)?'':'none';
+  });
+}
+function switchGiveTab(s,btn){
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  filterGive(s);
+}
+
+function loadMembers(){
+  fetch('/api/dept-members/marketing')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var members=d.members||[];
+      var online=members.filter(function(m){return m.online;}).length;
+      document.getElementById('mTotal').textContent=members.length;
+      document.getElementById('mOnline').textContent=online;
+      var list=document.getElementById('memberList');
+      if(!members.length){list.innerHTML='<div class="empty"><p>No members found</p></div>';return;}
+      list.innerHTML=members.map(function(m){
+        var init=(m.username||'?')[0].toUpperCase();
+        var av=m.pfp
+          ?'<img class="member-pfp" src="'+esc(m.pfp)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+           +'<div class="member-pfp-ph" style="display:none">'+init+'</div>'
+          :'<div class="member-pfp-ph">'+init+'</div>';
+        return '<div class="member-item">'
+          +'<div style="position:relative;flex-shrink:0">'+av
+          +'<span style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--card2);background:'+(m.online?'var(--green)':'var(--text4)')+';'+(m.online?'box-shadow:0 0 5px var(--green);':'')+'"></span></div>'
+          +'<div class="member-info"><div class="member-name">'+esc(m.username)+'</div>'
+          +'<div class="member-meta">'+(m.online?'Online':'Last: '+(m.last_login||'—'))+'</div></div>'
+          +'</div>';
+      }).join('');
+    })
+    .catch(function(){
+      document.getElementById('memberList').innerHTML='<div class="empty"><p style="color:var(--text3)">Could not load members.</p></div>';
+    });
+}
+loadMembers();
+</script>
+{% endblock %}

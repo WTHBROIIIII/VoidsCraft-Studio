@@ -1,0 +1,200 @@
+{% extends "sales/base_sales.html" %}
+{% block title %}Information{% endblock %}
+{% block tab_info %}active{% endblock %}
+
+{% block head %}
+<style>
+.quota-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.quota-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.quota-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:6px}
+.quota-progress-wrap{margin-top:8px}
+.quota-nums{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);color:var(--text2);margin-bottom:5px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.quota-big{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1}
+.quota-target{font-size:12px;color:var(--text2);margin-top:3px}
+.chart-wrap{height:240px;position:relative}
+.section-head{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+select.ctrl{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font);outline:none;cursor:pointer}
+.milestone-list{display:flex;flex-direction:column;gap:8px}
+.milestone-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);font-size:12px}
+.milestone-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.milestone-icon svg{width:14px;height:14px}
+.milestone-text{flex:1}
+.milestone-title{font-weight:600;color:var(--text);margin-bottom:2px}
+.milestone-desc{color:var(--text2);font-size:11px}
+.milestone-val{font-family:var(--mono);font-weight:700}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set is_probation = 'probation' in (role or '') %}
+
+{% set my_sales    = accepted_sales|length %}
+{% set my_outreach = accepted_outreach|length %}
+{% set sales_quota  = 2 %}
+{% set out_quota    = 15 %}
+{% set sales_pct    = [((my_sales / sales_quota) * 100)|int, 100]|min %}
+{% set out_pct      = [((my_outreach / out_quota) * 100)|int, 100]|min %}
+
+<div class="welcome">
+  <h1>Information & Quota</h1>
+  <p>Track your fortnightly quota, milestones, and performance metrics.</p>
+</div>
+
+<!-- QUOTA SECTION -->
+<div class="card" style="margin-bottom:20px">
+  <div class="section-head">
+    <span style="display:flex;align-items:center;gap:7px">
+      <svg style="width:16px;height:16px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Fortnightly Quota (15-Day Period)
+    </span>
+    <select class="ctrl" id="periodSel" onchange="updateCharts()">
+      <option value="all">All Time</option>
+      <option value="fortnight" selected>Current Fortnight</option>
+    </select>
+  </div>
+
+  <div class="quota-grid">
+    <div class="quota-card">
+      <div class="quota-label">Sales Logs</div>
+      <div class="quota-big" style="color:{% if sales_pct >= 100 %}var(--green){% elif sales_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}">
+        {{ my_sales }}
+      </div>
+      <div class="quota-target">Target: {{ sales_quota }} sales · Fortnight</div>
+      <div class="quota-progress-wrap">
+        <div class="quota-nums"><span>Progress</span><span>{{ sales_pct }}%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:{{ sales_pct }}%;background:{% if sales_pct >= 100 %}var(--green){% elif sales_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}"></div>
+        </div>
+      </div>
+      {% if sales_pct >= 100 %}
+      <div style="margin-top:8px"><span class="badge green"><span class="badge-dot"></span>Quota Met ✓</span></div>
+      {% else %}
+      <div style="margin-top:8px;font-size:11px;color:var(--text2)">{{ sales_quota - my_sales }} more needed</div>
+      {% endif %}
+    </div>
+
+    <div class="quota-card">
+      <div class="quota-label">Outreach Logs</div>
+      <div class="quota-big" style="color:{% if out_pct >= 100 %}var(--green){% elif out_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}">
+        {{ my_outreach }}
+      </div>
+      <div class="quota-target">Target: {{ out_quota }} outreaches · Fortnight</div>
+      <div class="quota-progress-wrap">
+        <div class="quota-nums"><span>Progress</span><span>{{ out_pct }}%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:{{ out_pct }}%;background:{% if out_pct >= 100 %}var(--green){% elif out_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}"></div>
+        </div>
+      </div>
+      {% if out_pct >= 100 %}
+      <div style="margin-top:8px"><span class="badge green"><span class="badge-dot"></span>Quota Met ✓</span></div>
+      {% else %}
+      <div style="margin-top:8px;font-size:11px;color:var(--text2)">{{ out_quota - my_outreach }} more needed</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <!-- CHART -->
+  <div class="card">
+    <div class="section-head">
+      <span style="display:flex;align-items:center;gap:7px">
+        <svg style="width:16px;height:16px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        My Activity Chart
+      </span>
+    </div>
+    <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+  </div>
+
+  <!-- MILESTONES -->
+  <div class="card">
+    <div class="section-head">
+      <span style="display:flex;align-items:center;gap:7px">
+        <svg style="width:16px;height:16px;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Outreach Milestones
+      </span>
+    </div>
+    <div class="milestone-list">
+      {% set out_count = my_outreach %}
+      <div class="milestone-item" style="border-color:{% if out_count >= 20 %}var(--green){% else %}var(--border){% endif %}">
+        <div class="milestone-icon" style="background:{% if out_count >= 20 %}var(--green-dim){% else %}var(--card2){% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{% if out_count >= 20 %}var(--green){% else %}var(--text3){% endif %}" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="milestone-text">
+          <div class="milestone-title">Base Milestone</div>
+          <div class="milestone-desc">Reach 20 outreaches</div>
+        </div>
+        <div class="milestone-val" style="color:{% if out_count >= 20 %}var(--green){% else %}var(--text3){% endif %}">
+          {% if is_probation %}70R${% else %}100R${% endif %}
+        </div>
+      </div>
+      <div class="milestone-item" style="border-color:{% if out_count >= 25 %}var(--accent){% else %}var(--border){% endif %}">
+        <div class="milestone-icon" style="background:{% if out_count >= 25 %}var(--accent-dim){% else %}var(--card2){% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{% if out_count >= 25 %}var(--accent){% else %}var(--text3){% endif %}" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="milestone-text">
+          <div class="milestone-title">Incremental Bonus</div>
+          <div class="milestone-desc">Every 5 extra outreaches after 20</div>
+        </div>
+        <div class="milestone-val" style="color:var(--accent)">+{% if is_probation %}7R${% else %}10R${% endif %} each</div>
+      </div>
+      <div class="milestone-item" style="border-color:{% if out_count >= 50 %}var(--purple){% else %}var(--border){% endif %}">
+        <div class="milestone-icon" style="background:{% if out_count >= 50 %}var(--purple-dim){% else %}var(--card2){% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="{% if out_count >= 50 %}var(--purple){% else %}var(--text3){% endif %}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="milestone-text">
+          <div class="milestone-title">Performance Cap</div>
+          <div class="milestone-desc">Reach 50 total outreaches</div>
+        </div>
+        <div class="milestone-val" style="color:var(--purple)">+{% if is_probation %}140R${% else %}200R${% endif %}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">Quota Rules</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7">
+        • Quota resets every <strong style="color:var(--text)">15 days</strong><br>
+        • Required: <strong style="color:var(--text)">2 sales logs</strong> + <strong style="color:var(--text)">15 outreaches</strong><br>
+        • Only <strong style="color:var(--green)">Accepted</strong> logs count toward quota<br>
+        • Missing quota may affect standing<br>
+        {% if is_probation %}• <strong style="color:var(--amber)">Probation:</strong> All pay is 30% reduced{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const salesData  = {{ accepted_sales|length }};
+const outData    = {{ accepted_outreach|length }};
+const pendSales  = {{ pending_logs|selectattr('type','equalto','Sales')|list|length }};
+const pendOut    = {{ pending_logs|selectattr('type','equalto','Outreach')|list|length }};
+
+const ctx = document.getElementById('activityChart').getContext('2d');
+new Chart(ctx, {
+  type:'bar',
+  data:{
+    labels:['Sales (Acc.)','Sales (Pend.)','Outreach (Acc.)','Outreach (Pend.)'],
+    datasets:[{
+      data:[salesData, pendSales, outData, pendOut],
+      backgroundColor:['rgba(34,211,160,.25)','rgba(245,166,35,.2)','rgba(108,99,255,.25)','rgba(245,166,35,.2)'],
+      borderColor:['#22d3a0','#f5a623','#6c63ff','#f5a623'],
+      borderWidth:1.5,borderRadius:5
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b93a8',font:{family:'JetBrains Mono',size:10}}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b93a8',font:{family:'JetBrains Mono',size:10},stepSize:1}}
+    }
+  }
+});
+</script>
+{% endblock %}

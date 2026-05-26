@@ -1,0 +1,668 @@
+{% extends "sales_manager/base_salesmanager.html" %}
+{% set page = 'analytics' %}
+
+{% block title %}Analytics{% endblock %}
+{% block tab_analytics %}active{% endblock %}
+{% block breadcrumb %}ANALYTICS{% endblock %}
+
+{% block head %}
+<style>
+  /* ── LAYOUT ── */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .analytics-grid.three {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .analytics-grid.full {
+    grid-template-columns: 1fr;
+  }
+  @media(max-width:1100px){ .analytics-grid.three { grid-template-columns: 1fr 1fr; } }
+  @media(max-width:800px) { .analytics-grid, .analytics-grid.three { grid-template-columns: 1fr; } }
+
+  /* ── CHART WRAPPERS ── */
+  .chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .chart-canvas-wrap.h160 { height: 160px; }
+  .chart-canvas-wrap.h200 { height: 200px; }
+  .chart-canvas-wrap.h240 { height: 240px; }
+  .chart-canvas-wrap.h280 { height: 280px; }
+
+  /* ── KPI ROW ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  @media(max-width:900px){ .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:500px){ .kpi-grid { grid-template-columns: 1fr 1fr; } }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r3);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+  .kpi-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; right: 0;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    filter: blur(20px);
+    opacity: .5;
+    pointer-events: none;
+  }
+  .kpi-card.k-gold::before   { background: var(--gold); }
+  .kpi-card.k-green::before  { background: var(--green); }
+  .kpi-card.k-blue::before   { background: var(--blue); }
+  .kpi-card.k-purple::before { background: var(--purple); }
+
+  .kpi-label { font-size: 11px; color: var(--text2); font-weight: 500; margin-bottom: 6px; }
+  .kpi-val {
+    font-family: var(--display);
+    font-size: 28px; font-weight: 800; line-height: 1;
+    letter-spacing: -.03em; margin-bottom: 3px;
+  }
+  .kpi-card.k-gold   .kpi-val { color: var(--gold); }
+  .kpi-card.k-green  .kpi-val { color: var(--green); }
+  .kpi-card.k-blue   .kpi-val { color: var(--blue); }
+  .kpi-card.k-purple .kpi-val { color: var(--purple); }
+  .kpi-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+  /* ── LEGEND ── */
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text2);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-left: 2px;
+  }
+
+  /* ── TOP PERFORMERS TABLE ── */
+  .perf-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .perf-row:last-child { border-bottom: none; }
+  .perf-rank {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text4);
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .perf-rank.top1 { color: var(--gold); font-weight: 700; }
+  .perf-rank.top2 { color: var(--text2); }
+  .perf-rank.top3 { color: var(--amber); }
+  .perf-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .perf-bar-wrap {
+    width: 80px;
+    height: 5px;
+    background: var(--card3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--gold2), var(--gold));
+  }
+  .perf-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--text3);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-eyebrow::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* No-data placeholder */
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    color: var(--text4);
+    font-size: 12px;
+    font-family: var(--mono);
+    gap: 6px;
+  }
+  .no-data svg { width: 24px; height: 24px; opacity: .4; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── PRE-PROCESS DATA IN JINJA ── #}
+
+{# All logs #}
+{% set sales_logs = sales_logs | default([]) %}
+{% set outreach_logs = outreach_logs | default([]) %}
+{% set accepted_sales = accepted_sales | default([]) %}
+{% set accepted_outreach = accepted_outreach | default([]) %}
+{% set pending_logs = pending_logs | default([]) %}
+{% set denied_logs = denied_logs | default([]) %}
+{% set all_sales    = sales_logs %}
+{% set all_out      = outreach_logs %}
+{% set acc_sales    = accepted_sales %}
+{% set acc_out      = accepted_outreach %}
+{% set pend_sales   = pending_logs  | selectattr('type','equalto','Sales')    | list %}
+{% set den_sales    = denied_logs   | selectattr('type','equalto','Sales')    | list %}
+{% set pend_out     = pending_logs  | selectattr('type','equalto','Outreach') | list %}
+{% set den_out      = denied_logs   | selectattr('type','equalto','Outreach') | list %}
+
+{# Acceptance rates #}
+{% set sales_rate   = ((acc_sales|length  / all_sales|length  * 100) | round(1)) if all_sales|length  > 0 else 0 %}
+{% set out_rate     = ((acc_out|length    / all_out|length    * 100) | round(1)) if all_out|length    > 0 else 0 %}
+
+{# Monthly breakdown — last 6 months (by timestamp prefix YYYY-MM) #}
+{% set months = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06',
+                 '2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'] %}
+{% set month_labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+
+{# Sales per month #}
+{% set sales_by_month = [] %}
+{% set out_by_month   = [] %}
+{% for m in months %}
+  {% set sc = all_sales | selectattr('timestamp','defined') | selectattr('timestamp','string') | list %}
+  {% set mc = sc | selectattr('timestamp','ne', none) | list %}
+  {% set cnt_s = namespace(n=0) %}
+  {% set cnt_o = namespace(n=0) %}
+  {% for l in all_sales  %}{% if l.timestamp and l.timestamp[:7] == m %}{% set cnt_s.n = cnt_s.n + 1 %}{% endif %}{% endfor %}
+  {% for l in all_out    %}{% if l.timestamp and l.timestamp[:7] == m %}{% set cnt_o.n = cnt_o.n + 1 %}{% endif %}{% endfor %}
+  {% set _ = sales_by_month.append(cnt_s.n) %}
+  {% set _ = out_by_month.append(cnt_o.n) %}
+{% endfor %}
+
+{# Top performers by sales log count #}
+{% set perf = namespace(data={}) %}
+{% for l in all_sales %}
+  {% set u = l.username or 'Unknown' %}
+  {% if u in perf.data %}
+    {# can't mutate dict directly in jinja, so we build a list #}
+  {% endif %}
+{% endfor %}
+{# Build performer list via groupby #}
+{% set performer_list = [] %}
+{% for u, logs in all_sales | groupby('username') %}
+  {% set _ = performer_list.append({'name': u, 'count': logs|list|length}) %}
+{% endfor %}
+{% set top_performers = performer_list | sort(attribute='count', reverse=True) %}
+{% set max_perf = top_performers[0].count if top_performers else 1 %}
+
+{# Outreach performers #}
+{% set out_performer_list = [] %}
+{% for u, logs in all_out | groupby('username') %}
+  {% set _ = out_performer_list.append({'name': u, 'count': logs|list|length}) %}
+{% endfor %}
+{% set top_out = out_performer_list | sort(attribute='count', reverse=True) %}
+{% set max_out = top_out[0].count if top_out else 1 %}
+
+{# ── PAGE HEADER ── #}
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Sales Manager Portal</div>
+    <div class="page-title">Analytics <span>&amp; Insights</span></div>
+    <div class="page-sub">Performance overview for the Sales department.</div>
+  </div>
+</div>
+
+{# ── KPI CARDS ── #}
+<div class="kpi-grid">
+  <div class="kpi-card k-gold">
+    <div class="kpi-label">Total Sales Logs</div>
+    <div class="kpi-val">{{ all_sales|length }}</div>
+    <div class="kpi-sub">All time</div>
+  </div>
+  <div class="kpi-card k-green">
+    <div class="kpi-label">Sales Accepted</div>
+    <div class="kpi-val">{{ acc_sales|length }}</div>
+    <div class="kpi-sub">{{ sales_rate }}% approval rate</div>
+  </div>
+  <div class="kpi-card k-blue">
+    <div class="kpi-label">Total Outreach</div>
+    <div class="kpi-val">{{ all_out|length }}</div>
+    <div class="kpi-sub">All time</div>
+  </div>
+  <div class="kpi-card k-purple">
+    <div class="kpi-label">Outreach Accepted</div>
+    <div class="kpi-val">{{ acc_out|length }}</div>
+    <div class="kpi-sub">{{ out_rate }}% approval rate</div>
+  </div>
+</div>
+
+{# ── ROW 1: PIE CHARTS ── #}
+<div class="section-eyebrow">Status Breakdown</div>
+<div class="analytics-grid three" style="margin-bottom:18px">
+
+  {# Sales Status Pie #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        Sales Status
+      </div>
+    </div>
+    {% if all_sales|length > 0 %}
+    <div class="chart-canvas-wrap h200"><canvas id="salesPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Accepted<span class="legend-val">{{ acc_sales|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Pending<span class="legend-val">{{ pend_sales|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Denied<span class="legend-val">{{ den_sales|length }}</span></div>
+    </div>
+    {% else %}
+    <div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>
+    {% endif %}
+  </div>
+
+  {# Outreach Status Pie #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        Outreach Status
+      </div>
+    </div>
+    {% if all_out|length > 0 %}
+    <div class="chart-canvas-wrap h200"><canvas id="outreachPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Accepted<span class="legend-val">{{ acc_out|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Pending<span class="legend-val">{{ pend_out|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Denied<span class="legend-val">{{ den_out|length }}</span></div>
+    </div>
+    {% else %}
+    <div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>
+    {% endif %}
+  </div>
+
+  {# Combined ratio doughnut #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>
+        Activity Split
+      </div>
+    </div>
+    {% if (all_sales|length + all_out|length) > 0 %}
+    <div class="chart-canvas-wrap h200"><canvas id="splitPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Sales<span class="legend-val">{{ all_sales|length }}</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Outreach<span class="legend-val">{{ all_out|length }}</span></div>
+    </div>
+    {% else %}
+    <div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>
+    {% endif %}
+  </div>
+
+</div>
+
+{# ── ROW 2: BAR CHART (monthly) ── #}
+<div class="section-eyebrow">Monthly Activity</div>
+<div class="analytics-grid full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Sales &amp; Outreach by Month — 2026
+      </div>
+    </div>
+    <div class="chart-canvas-wrap h280"><canvas id="monthlyBar"></canvas></div>
+    <div class="chart-legend" style="margin-top:14px">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Sales</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Outreach</div>
+    </div>
+  </div>
+</div>
+
+{# ── ROW 3: TOP PERFORMERS ── #}
+<div class="section-eyebrow">Top Performers</div>
+<div class="analytics-grid" style="margin-bottom:18px">
+
+  {# Sales performers #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Top Sales Staff
+      </div>
+    </div>
+    {% if top_performers %}
+      {% for p in top_performers[:8] %}
+      <div class="perf-row">
+        <div class="perf-rank {% if loop.index == 1 %}top1{% elif loop.index == 2 %}top2{% elif loop.index == 3 %}top3{% endif %}">
+          {{ loop.index }}
+        </div>
+        <div class="perf-name">{{ p.name }}</div>
+        <div class="perf-bar-wrap">
+          <div class="perf-bar-fill" style="width:{{ ((p.count / max_perf) * 100)|round }}%"></div>
+        </div>
+        <div class="perf-count">{{ p.count }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        No logs yet
+      </div>
+    {% endif %}
+  </div>
+
+  {# Outreach performers #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Top Outreach Staff
+      </div>
+    </div>
+    {% if top_out %}
+      {% for p in top_out[:8] %}
+      <div class="perf-row">
+        <div class="perf-rank {% if loop.index == 1 %}top1{% elif loop.index == 2 %}top2{% elif loop.index == 3 %}top3{% endif %}">
+          {{ loop.index }}
+        </div>
+        <div class="perf-name">{{ p.name }}</div>
+        <div class="perf-bar-wrap">
+          <div class="perf-bar-fill" style="width:{{ ((p.count / max_out) * 100)|round }}%;background:linear-gradient(90deg,#3a7eff,var(--blue))"></div>
+        </div>
+        <div class="perf-count" style="color:var(--blue)">{{ p.count }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        No logs yet
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+{# ── ROW 4: ACCEPTANCE RATE BARS ── #}
+<div class="section-eyebrow">Approval Rates</div>
+<div class="analytics-grid full">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Approval Rate Overview
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;padding:4px 0">
+
+      {# Sales accepted #}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">Sales — Accepted</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--green)">{{ acc_sales|length }} / {{ all_sales|length }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:var(--green);border-radius:4px;width:{{ sales_rate }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ sales_rate }}% acceptance rate</div>
+      </div>
+
+      {# Sales pending #}
+      {% set pend_rate = ((pend_sales|length / all_sales|length * 100)|round(1)) if all_sales|length > 0 else 0 %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">Sales — Pending</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--amber)">{{ pend_sales|length }} / {{ all_sales|length }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:var(--amber);border-radius:4px;width:{{ pend_rate }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ pend_rate }}% pending rate</div>
+      </div>
+
+      {# Sales denied #}
+      {% set deny_rate = ((den_sales|length / all_sales|length * 100)|round(1)) if all_sales|length > 0 else 0 %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">Sales — Denied</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--red)">{{ den_sales|length }} / {{ all_sales|length }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:var(--red);border-radius:4px;width:{{ deny_rate }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ deny_rate }}% denial rate</div>
+      </div>
+
+      <div style="height:1px;background:var(--border)"></div>
+
+      {# Outreach accepted #}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">Outreach — Accepted</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--blue)">{{ acc_out|length }} / {{ all_out|length }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:var(--blue);border-radius:4px;width:{{ out_rate }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ out_rate }}% acceptance rate</div>
+      </div>
+
+      {# Outreach pending #}
+      {% set out_pend_rate = ((pend_out|length / all_out|length * 100)|round(1)) if all_out|length > 0 else 0 %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">Outreach — Pending</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--amber)">{{ pend_out|length }} / {{ all_out|length }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:var(--amber);border-radius:4px;width:{{ out_pend_rate }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ out_pend_rate }}% pending rate</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+/* ── SHARED CHART DEFAULTS ── */
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text2') || '#8890ad';
+Chart.defaults.font.family = "'DM Mono', monospace";
+
+var accent   = '#f0b429';
+var green    = '#22d3a0';
+var amber    = '#f5a623';
+var red      = '#f05a5a';
+var blue     = '#4f8ef7';
+var purple   = '#a78bfa';
+var border   = 'rgba(26,29,46,0.8)';
+
+function rgba(hex, a) {
+  var r = parseInt(hex.slice(1,3),16);
+  var g = parseInt(hex.slice(3,5),16);
+  var b = parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+
+/* ── SALES STATUS PIE ── */
+{% if sales_logs|length > 0 %}
+new Chart(document.getElementById('salesPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Accepted', 'Pending', 'Denied'],
+    datasets: [{
+      data: [{{ acc_sales|length }}, {{ pend_sales|length }}, {{ den_sales|length }}],
+      backgroundColor: [rgba(green,.2), rgba(amber,.2), rgba(red,.2)],
+      borderColor:     [green, amber, red],
+      borderWidth: 1.5,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '65%',
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: {
+      label: function(c){ return ' '+c.label+': '+c.raw+' logs'; }
+    }}}
+  }
+});
+{% endif %}
+
+/* ── OUTREACH STATUS PIE ── */
+{% if outreach_logs|length > 0 %}
+new Chart(document.getElementById('outreachPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Accepted', 'Pending', 'Denied'],
+    datasets: [{
+      data: [{{ acc_out|length }}, {{ pend_out|length }}, {{ den_out|length }}],
+      backgroundColor: [rgba(green,.2), rgba(amber,.2), rgba(red,.2)],
+      borderColor:     [green, amber, red],
+      borderWidth: 1.5,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '65%',
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: {
+      label: function(c){ return ' '+c.label+': '+c.raw+' logs'; }
+    }}}
+  }
+});
+{% endif %}
+
+/* ── ACTIVITY SPLIT PIE ── */
+{% if (sales_logs|length + outreach_logs|length) > 0 %}
+new Chart(document.getElementById('splitPie').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Sales', 'Outreach'],
+    datasets: [{
+      data: [{{ all_sales|length }}, {{ all_out|length }}],
+      backgroundColor: [rgba(accent,.2), rgba(blue,.2)],
+      borderColor:     [accent, blue],
+      borderWidth: 1.5,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '65%',
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: {
+      label: function(c){ return ' '+c.label+': '+c.raw; }
+    }}}
+  }
+});
+{% endif %}
+
+/* ── MONTHLY BAR CHART ── */
+var monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var salesData   = {{ sales_by_month | default([]) | tojson }};
+var outData     = {{ out_by_month   | default([]) | tojson }};
+
+new Chart(document.getElementById('monthlyBar').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: monthLabels,
+    datasets: [
+      {
+        label: 'Sales',
+        data: salesData,
+        backgroundColor: rgba(accent, .25),
+        borderColor: accent,
+        borderWidth: 1.5,
+        borderRadius: 4,
+        borderSkipped: false
+      },
+      {
+        label: 'Outreach',
+        data: outData,
+        backgroundColor: rgba(blue, .2),
+        borderColor: blue,
+        borderWidth: 1.5,
+        borderRadius: 4,
+        borderSkipped: false
+      }
+    ]
+  },
+  options: {
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: {
+        grid: { color: 'rgba(26,29,46,0.8)' },
+        ticks: { font: { size: 11 } }
+      },
+      y: {
+        grid: { color: 'rgba(26,29,46,0.8)' },
+        ticks: { font: { size: 11 }, stepSize: 1, precision: 0 },
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(c){ return ' '+c.dataset.label+': '+c.raw; }
+        }
+      }
+    }
+  }
+});
+</script>
+{% endblock %}

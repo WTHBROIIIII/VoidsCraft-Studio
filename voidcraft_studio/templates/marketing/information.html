@@ -1,0 +1,217 @@
+{% extends "marketing/base_marketing.html" %}
+{% block title %}Information{% endblock %}
+{% block tab_info %}active{% endblock %}
+
+{% block head %}
+<style>
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.info-grid{grid-template-columns:1fr}}
+.tier-grid{display:flex;flex-direction:column;gap:8px}
+.tier-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--card2);transition:border-color .15s}
+.tier-row:hover{border-color:var(--border2)}
+.tier-range{font-family:var(--mono);font-size:12px;font-weight:700;min-width:100px;flex-shrink:0}
+.tier-divider{width:1px;height:32px;background:var(--border);flex-shrink:0}
+.tier-ping{font-size:13px;font-weight:600;color:var(--text)}
+.tier-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.quota-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.quota-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:6px}
+.quota-val{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1}
+.quota-target{font-size:12px;color:var(--text2);margin-top:3px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.quota-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.reminder-box{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.25);border-radius:var(--r);padding:14px 16px}
+.reminder-title{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.reminder-title svg{width:13px;height:13px}
+.reminder-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);padding:5px 0;border-bottom:1px solid rgba(245,166,35,.1)}
+.reminder-item:last-child{border-bottom:none}
+.reminder-item::before{content:'→';color:var(--accent);flex-shrink:0;margin-top:1px}
+.chart-wrap{height:220px;position:relative}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set my_giv   = accepted_giveaway|length %}
+{% set quota_giv = 5 %}
+{% set giv_pct   = [((my_giv / quota_giv) * 100)|int, 100]|min %}
+
+<div class="welcome">
+  <h1>Information & Quota</h1>
+  <p>Server tiers, fortnightly quota tracker, and team reminders.</p>
+</div>
+
+<!-- SERVER TIERS + QUOTA -->
+<div class="info-grid" style="margin-bottom:20px">
+
+  <!-- SERVER TIERS -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Server Member Tiers
+    </div>
+    <div class="tier-grid">
+
+      <div class="tier-row" style="border-color:var(--red-dim)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+        <div class="tier-range" style="color:var(--red)">0 – 899</div>
+        <div class="tier-divider"></div>
+        <div>
+          <div class="tier-ping" style="color:var(--red)">No Mutual Giveaway</div>
+          <div class="tier-sub">We don't do a mutual giveaway</div>
+        </div>
+      </div>
+
+      <div class="tier-row">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></div>
+        <div class="tier-range" style="color:var(--text2)">900 – 1,999</div>
+        <div class="tier-divider"></div>
+        <div>
+          <div class="tier-ping" style="color:var(--text2)">No Ping From Us</div>
+          <div class="tier-sub">We host but don't ping</div>
+        </div>
+      </div>
+
+      <div class="tier-row" style="border-color:rgba(79,142,247,.25)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0"></div>
+        <div class="tier-range" style="color:var(--blue)">2,000 – 2,799</div>
+        <div class="tier-divider"></div>
+        <div>
+          <div class="tier-ping" style="color:var(--blue)">Giveaway Ping</div>
+          <div class="tier-sub">@Giveaway ping from our side</div>
+        </div>
+      </div>
+
+      <div class="tier-row" style="border-color:rgba(167,139,250,.3)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0"></div>
+        <div class="tier-range" style="color:var(--purple)">2,800 – 3,999</div>
+        <div class="tier-divider"></div>
+        <div>
+          <div class="tier-ping" style="color:var(--purple)">Here Ping</div>
+          <div class="tier-sub">@here ping from our side</div>
+        </div>
+      </div>
+
+      <div class="tier-row" style="border-color:rgba(245,166,35,.35);background:rgba(245,166,35,.05)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>
+        <div class="tier-range" style="color:var(--accent)">4,000+</div>
+        <div class="tier-divider"></div>
+        <div>
+          <div class="tier-ping" style="color:var(--accent)">Everyone Ping — Both Sides</div>
+          <div class="tier-sub">@everyone ping from both servers</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- QUOTA + CHART -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Fortnightly Quota (15 days)
+    </div>
+
+    <div class="quota-grid">
+      <div class="quota-card">
+        <div class="quota-label">Mutual Giveaways</div>
+        <div class="quota-val" style="color:{% if giv_pct >= 100 %}var(--green){% elif giv_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}">{{ my_giv }}</div>
+        <div class="quota-target">Target: {{ quota_giv }}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:{{ giv_pct }}%;background:{% if giv_pct >= 100 %}var(--green){% elif giv_pct >= 50 %}var(--amber){% else %}var(--red){% endif %}"></div>
+        </div>
+        <div style="margin-top:6px">
+          {% if giv_pct >= 100 %}<span class="badge green"><span class="badge-dot"></span>Met ✓</span>
+          {% else %}<span style="font-size:11px;color:var(--text2)">{{ quota_giv - my_giv }} remaining</span>{% endif %}
+        </div>
+      </div>
+      <div class="quota-card">
+        <div class="quota-label">FOTD</div>
+        <div class="quota-val" style="color:var(--accent)">—</div>
+        <div class="quota-target">Continuous coordination</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2)">Co-ordinate with your team daily. No fixed number — consistency is the standard.</div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div style="font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px">Activity Overview</div>
+    <div class="chart-wrap"><canvas id="mktChart"></canvas></div>
+  </div>
+</div>
+
+<!-- REMINDERS -->
+<div class="info-grid">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Team Reminders
+    </div>
+    <div class="reminder-box">
+      <div class="reminder-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Important Rules
+      </div>
+      <div class="reminder-item">The <strong style="color:var(--text)">🎉 request-giveaway</strong> channel must be used before either side posts. Always request first.</div>
+      <div class="reminder-item">Giveaway entries should be at least <strong style="color:var(--text)">20–25+</strong> for a valid mutual.</div>
+      <div class="reminder-item">Minimum invite reward is <strong style="color:var(--text)">30 Robux per invite</strong> for our giveaways.</div>
+      <div class="reminder-item">Quota resets every <strong style="color:var(--text)">15 days</strong> (fortnightly). Track your submissions carefully.</div>
+      <div class="reminder-item">FOTD must be co-ordinated with the rest of your team — don't post alone.</div>
+      <div class="reminder-item">Only <strong style="color:var(--green)">Accepted</strong> logs count toward quota progress.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Quota Summary
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="padding:12px;background:var(--card2);border:1px solid rgba(245,166,35,.2);border-radius:var(--r)">
+        <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">Period</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)">Every Fortnight (15 days)</div>
+      </div>
+      <div style="padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">Required</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Mutual Giveaways</span><span style="font-family:var(--mono);font-weight:600;color:var(--accent)">5</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">FOTD</span><span style="font-family:var(--mono);font-weight:600;color:var(--accent)">Continuous</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="color:var(--text3);text-decoration:line-through">Partnerships</span>
+            <span class="badge red" style="font-size:9px">Closed</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text2);line-height:1.7">
+        Missing quota may affect your standing in the department. Contact your manager if you need an extension.
+        {% if probation %}<br><span style="color:var(--amber)">⚠ Probation: pay is 30% reduced until review.</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const acc  = {{ accepted_giveaway|length }};
+const pend = {{ pending_logs|selectattr('type','equalto','Giveaway')|list|length }};
+const den  = {{ denied_logs|selectattr('type','equalto','Giveaway')|list|length }};
+new Chart(document.getElementById('mktChart').getContext('2d'),{
+  type:'doughnut',
+  data:{
+    labels:['Accepted','Pending','Denied'],
+    datasets:[{
+      data:[acc,pend,den],
+      backgroundColor:['rgba(34,211,160,.2)','rgba(245,166,35,.2)','rgba(240,90,90,.2)'],
+      borderColor:['#22d3a0','#f5a623','#f05a5a'],
+      borderWidth:1.5
+    }]
+  },
+  options:{
+    cutout:'62%',maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#8b93a8',font:{family:'JetBrains Mono',size:11},boxWidth:10,padding:14}}
+    }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{
+    "accepted_logs": [
+        {
+            "id": "1778862412",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "website test",
+                "reporting_user": "w",
+                "investigator": "weeooi.",
+                "date": "0002-02-22",
+                "outcome": "Guilty",
+                "reason": "ss",
+                "case_number": "1778862412"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Accepted",
+            "reviewed_by": "aayushl2",
+            "reviewed_at": "2026-05-15 22:12",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 22:11"
+        }
+    ],
+    "pending_logs": [
+        {
+            "id": "1778861744",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "website test",
+                "reporting_user": "a",
+                "investigator": "weeooi.",
+                "date": "3333-03-03",
+                "outcome": "Guilty",
+                "reason": "33",
+                "case_number": "1778861744"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Pending",
+            "reviewed_by": "",
+            "reviewed_at": "",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 22:00"
+        },
+        {
+            "id": "1778861566",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "TEST",
+                "reporting_user": "ASD",
+                "investigator": "weeooi.",
+                "date": "2020-12-31",
+                "outcome": "N/A",
+                "reason": "gg",
+                "case_number": "1778861566"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Pending",
+            "reviewed_by": "",
+            "reviewed_at": "",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 21:57"
+        },
+        {
+            "id": "1778846428",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "TEST",
+                "reporting_user": "ASD",
+                "investigator": "weeooi.",
+                "date": "13555-05-05",
+                "outcome": "Guilty",
+                "reason": "55",
+                "case_number": "1778846428"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Pending",
+            "reviewed_by": "",
+            "reviewed_at": "",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 17:45"
+        },
+        {
+            "id": "1778846376",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "a",
+                "reporting_user": "a",
+                "investigator": "weeooi.",
+                "date": "0003-03-31",
+                "outcome": "Guilty",
+                "reason": "3",
+                "case_number": "1778846376"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Pending",
+            "reviewed_by": "",
+            "reviewed_at": "",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 17:44"
+        },
+        {
+            "id": "1778846052",
+            "user_id": "1444864625924509931",
+            "username": "weeooi.",
+            "type": "Investigation",
+            "proof": "http://127.0.0.1:5000",
+            "details": {
+                "reported_user": "TEST",
+                "reporting_user": "ASD",
+                "investigator": "weeooi.",
+                "date": "0004-03-02",
+                "outcome": "Innocent",
+                "reason": "TEST WEBSITE",
+                "case_number": "1778846052"
+            },
+            "amount": "",
+            "dept": "investigation",
+            "status": "Pending",
+            "reviewed_by": "",
+            "reviewed_at": "",
+            "deny_reason": "",
+            "timestamp": "2026-05-15 17:39"
+        }
+    ],
+    "denied_logs": [],
+    "directives": [],
+    "broadcasts": []
+}

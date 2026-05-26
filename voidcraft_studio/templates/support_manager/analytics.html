@@ -1,0 +1,389 @@
+{% extends "support_manager/base_support.html" %}
+{% set page = 'analytics' %}
+{% block title %}Analytics{% endblock %}
+{% block tab_analytics %}active{% endblock %}
+{% block breadcrumb %}ANALYTICS{% endblock %}
+
+{% block head %}
+<style>
+  .ag { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+  .ag.three { grid-template-columns:1fr 1fr 1fr; }
+  .ag.full  { grid-template-columns:1fr; }
+  @media(max-width:1000px){ .ag.three { grid-template-columns:1fr 1fr; } }
+  @media(max-width:750px) { .ag,.ag.three { grid-template-columns:1fr; } }
+
+  .cw { position:relative; width:100%; }
+  .cw.h200 { height:200px; }
+  .cw.h260 { height:260px; }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+  @media(max-width:900px){ .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+  .kpi { background:var(--card); border:1px solid var(--border); border-radius:var(--r3); padding:16px 18px; position:relative; overflow:hidden; transition:border-color .2s,transform .2s; }
+  .kpi:hover { border-color:var(--border2); transform:translateY(-1px); }
+  .kpi::before { content:''; position:absolute; top:0; right:0; width:60px; height:60px; border-radius:50%; filter:blur(20px); opacity:.5; pointer-events:none; }
+  .kpi.k-sp::before    { background:var(--sp); }
+  .kpi.k-green::before { background:var(--green); }
+  .kpi.k-blue::before  { background:var(--blue); }
+  .kpi.k-amber::before { background:var(--amber); }
+  .kpi-lbl { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+  .kpi-val { font-family:var(--display); font-size:28px; font-weight:800; line-height:1; letter-spacing:-.03em; margin-bottom:3px; }
+  .kpi.k-sp    .kpi-val { color:var(--sp); }
+  .kpi.k-green .kpi-val { color:var(--green); }
+  .kpi.k-blue  .kpi-val { color:var(--blue); }
+  .kpi.k-amber .kpi-val { color:var(--amber); }
+  .kpi-sub { font-size:10px; color:var(--text3); font-family:var(--mono); }
+
+  .chart-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .leg-item { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text2); }
+  .leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .leg-val { font-family:var(--mono); font-size:11px; color:var(--text3); margin-left:2px; }
+
+  .member-analytics-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+  .ma-card { background:var(--card2); border:1px solid var(--border); border-radius:var(--r2); padding:12px; display:flex; align-items:center; gap:10px; transition:border-color .15s; }
+  .ma-card:hover { border-color:var(--border2); }
+  .ma-card.is-online { border-color:rgba(45,212,191,0.25); }
+  .ma-pfp { width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--border2); flex-shrink:0; }
+  .ma-pfp.on { border-color:var(--sp); }
+  .ma-pfp-ph { width:36px; height:36px; border-radius:50%; background:var(--sp-dim); border:2px solid rgba(45,212,191,0.3); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:14px; font-weight:700; color:var(--sp); flex-shrink:0; }
+  .ma-info { flex:1; min-width:0; }
+  .ma-name { font-size:12px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ma-status { font-size:10px; font-family:var(--mono); }
+  .ma-status.on  { color:var(--sp); }
+  .ma-status.off { color:var(--text4); }
+
+  .sec-ey { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--text3); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .sec-ey::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .no-data { display:flex; flex-direction:column; align-items:center; justify-content:center; height:120px; color:var(--text4); font-size:12px; font-family:var(--mono); gap:6px; }
+  .no-data svg { width:24px; height:24px; opacity:.4; }
+
+  .skel { background:linear-gradient(90deg,var(--card2) 25%,var(--card3) 50%,var(--card2) 75%); background-size:200% 100%; animation:skel 1.4s infinite; border-radius:var(--r); }
+  @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── DATA ── #}
+{% set all_logs   = accepted_logs + pending_logs + denied_logs %}
+{% set acc_count  = accepted_logs | length %}
+{% set pend_count = pending_logs  | length %}
+{% set den_count  = denied_logs   | length %}
+{% set total      = all_logs | length %}
+{% set acc_rate   = ((acc_count  / total * 100)|round(1)) if total > 0 else 0 %}
+{% set pend_rate  = ((pend_count / total * 100)|round(1)) if total > 0 else 0 %}
+{% set den_rate   = ((den_count  / total * 100)|round(1)) if total > 0 else 0 %}
+
+{# ── monthly breakdown — one namespace per month to avoid tojson Undefined ── #}
+{% set m01=namespace(n=0) %}{% set m02=namespace(n=0) %}{% set m03=namespace(n=0) %}
+{% set m04=namespace(n=0) %}{% set m05=namespace(n=0) %}{% set m06=namespace(n=0) %}
+{% set m07=namespace(n=0) %}{% set m08=namespace(n=0) %}{% set m09=namespace(n=0) %}
+{% set m10=namespace(n=0) %}{% set m11=namespace(n=0) %}{% set m12=namespace(n=0) %}
+
+{% for l in all_logs %}
+  {% if l.timestamp %}
+    {% set mo = l.timestamp[:7] %}
+    {% if   mo=='2026-01' %}{% set m01.n=m01.n+1 %}
+    {% elif mo=='2026-02' %}{% set m02.n=m02.n+1 %}
+    {% elif mo=='2026-03' %}{% set m03.n=m03.n+1 %}
+    {% elif mo=='2026-04' %}{% set m04.n=m04.n+1 %}
+    {% elif mo=='2026-05' %}{% set m05.n=m05.n+1 %}
+    {% elif mo=='2026-06' %}{% set m06.n=m06.n+1 %}
+    {% elif mo=='2026-07' %}{% set m07.n=m07.n+1 %}
+    {% elif mo=='2026-08' %}{% set m08.n=m08.n+1 %}
+    {% elif mo=='2026-09' %}{% set m09.n=m09.n+1 %}
+    {% elif mo=='2026-10' %}{% set m10.n=m10.n+1 %}
+    {% elif mo=='2026-11' %}{% set m11.n=m11.n+1 %}
+    {% elif mo=='2026-12' %}{% set m12.n=m12.n+1 %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{# ── HEADER ── #}
+<div class="page-header">
+  <div>
+    <div class="page-header-eyebrow">Support Manager Portal</div>
+    <div class="page-title">Analytics <span>&amp; Insights</span></div>
+    <div class="page-sub">Activity and membership overview for the Support department.</div>
+  </div>
+</div>
+
+{# ── KPIs ── #}
+<div class="kpi-grid">
+  <div class="kpi k-sp">   <div class="kpi-lbl">Total Members</div>    <div class="kpi-val" id="kTotal">—</div>   <div class="kpi-sub">Support dept</div></div>
+  <div class="kpi k-green"><div class="kpi-lbl">Online Now</div>        <div class="kpi-val" id="kOnline">—</div>  <div class="kpi-sub">Last 30 min</div></div>
+  <div class="kpi k-blue"> <div class="kpi-lbl">Total Logs</div>        <div class="kpi-val">{{ total }}</div>     <div class="kpi-sub">All time</div></div>
+  <div class="kpi k-amber"><div class="kpi-lbl">Pending Review</div>    <div class="kpi-val">{{ pend_count }}</div><div class="kpi-sub">Awaiting action</div></div>
+</div>
+
+{# ── PIE CHARTS ── #}
+<div class="sec-ey">Activity Overview</div>
+<div class="ag three" style="margin-bottom:18px">
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>Log Status</div></div>
+    {% if total > 0 %}
+    <div class="cw h200"><canvas id="statusPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Accepted<span class="leg-val">{{ acc_count }}</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pending<span class="leg-val">{{ pend_count }}</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Denied<span class="leg-val">{{ den_count }}</span></div>
+    </div>
+    {% else %}<div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Member Status</div></div>
+    <div class="cw h200"><canvas id="memberPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--sp)"></div>Online<span class="leg-val" id="legOnline">—</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--text3)"></div>Offline<span class="leg-val" id="legOffline">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg>Approval Split</div></div>
+    {% if total > 0 %}
+    <div class="cw h200"><canvas id="approvalPie"></canvas></div>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--sp)"></div>Accepted<span class="leg-val">{{ acc_rate }}%</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Pending<span class="leg-val">{{ pend_rate }}%</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Denied<span class="leg-val">{{ den_rate }}%</span></div>
+    </div>
+    {% else %}<div class="no-data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>No data yet</div>{% endif %}
+  </div>
+
+</div>
+
+{# ── MONTHLY BAR ── #}
+<div class="sec-ey">Monthly Activity</div>
+<div class="ag full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Total Logs by Month — 2026</div></div>
+    <div class="cw h260"><canvas id="monthlyBar"></canvas></div>
+    <div class="chart-legend" style="margin-top:14px">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--sp)"></div>Logs submitted</div>
+    </div>
+  </div>
+</div>
+
+{# ── APPROVAL RATE BARS ── #}
+<div class="sec-ey">Approval Rates</div>
+<div class="ag full" style="margin-bottom:18px">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Log Breakdown</div></div>
+    <div style="display:flex;flex-direction:column;gap:16px;padding:4px 0">
+      {% for lbl, val, col, cnt in [
+        ('Accepted', acc_rate,  'var(--green)', acc_count),
+        ('Pending',  pend_rate, 'var(--amber)', pend_count),
+        ('Denied',   den_rate,  'var(--red)',   den_count)
+      ] %}
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12.5px;color:var(--text2)">{{ lbl }}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:{{ col }}">{{ cnt }} / {{ total }}</span>
+        </div>
+        <div style="height:8px;background:var(--card3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:{{ col }};border-radius:4px;width:{{ val }}%;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px">{{ val }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# ── MEMBER LIST ── #}
+<div class="sec-ey">Department Members</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>All Support Members</div>
+    <button class="btn btn-ghost btn-xs" onclick="loadMembers()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Refresh
+    </button>
+  </div>
+  <div id="maGrid" class="member-analytics-grid">
+    {% for _ in range(6) %}
+    <div class="ma-card">
+      <div class="skel" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+        <div class="skel" style="height:10px;width:80%"></div>
+        <div class="skel" style="height:9px;width:50%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{#
+  KEY FIX: emit monthly data + pie data as JS globals here,
+  still inside {% block content %} where namespace vars are in scope.
+  {% block scripts %} cannot see these variables.
+#}
+<script>
+  window._SP = {
+    hasLogs: {{ 'true' if total > 0 else 'false' }},
+    acc:     {{ acc_count }},
+    pend:    {{ pend_count }},
+    den:     {{ den_count }},
+    accRate: {{ acc_rate }},
+    pendRate:{{ pend_rate }},
+    denRate: {{ den_rate }},
+    monthly: [
+      {{ m01.n }},{{ m02.n }},{{ m03.n }},{{ m04.n }},
+      {{ m05.n }},{{ m06.n }},{{ m07.n }},{{ m08.n }},
+      {{ m09.n }},{{ m10.n }},{{ m11.n }},{{ m12.n }}
+    ]
+  };
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function rgba(hex,a){
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+var sp='#2dd4bf',green='#22d3a0',amber='#f5a623',red='#f05a5a',text3='#454b68';
+var D = window._SP;
+
+var pieOpts = function(){
+  return {
+    cutout:'65%',
+    maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}
+    }
+  };
+};
+
+/* status pie */
+if(D.hasLogs){
+  new Chart(document.getElementById('statusPie').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Accepted','Pending','Denied'],
+      datasets:[{
+        data:[D.acc, D.pend, D.den],
+        backgroundColor:[rgba(green,.2),rgba(amber,.2),rgba(red,.2)],
+        borderColor:[green,amber,red],
+        borderWidth:1.5,hoverOffset:6
+      }]
+    },
+    options:pieOpts()
+  });
+
+  new Chart(document.getElementById('approvalPie').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Accepted','Pending','Denied'],
+      datasets:[{
+        data:[D.accRate, D.pendRate, D.denRate],
+        backgroundColor:[rgba(sp,.2),rgba(amber,.2),rgba(red,.2)],
+        borderColor:[sp,amber,red],
+        borderWidth:1.5,hoverOffset:6
+      }]
+    },
+    options:pieOpts()
+  });
+}
+
+/* member pie — updated after API call */
+var memberPieChart = new Chart(document.getElementById('memberPie').getContext('2d'),{
+  type:'doughnut',
+  data:{
+    labels:['Online','Offline'],
+    datasets:[{
+      data:[0,1],
+      backgroundColor:[rgba(sp,.2),rgba(text3,.2)],
+      borderColor:[sp,text3],
+      borderWidth:1.5,hoverOffset:6
+    }]
+  },
+  options:pieOpts()
+});
+
+/* monthly bar */
+new Chart(document.getElementById('monthlyBar').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets:[{
+      label:'Logs',
+      data: D.monthly,
+      backgroundColor:rgba(sp,.25),
+      borderColor:sp,
+      borderWidth:1.5,
+      borderRadius:4,
+      borderSkipped:false
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    scales:{
+      x:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11}}},
+      y:{grid:{color:'rgba(26,29,46,0.8)'},ticks:{font:{size:11},stepSize:1,precision:0},beginAtZero:true}
+    },
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:function(c){return ' Logs: '+c.raw;}}}
+    }
+  }
+});
+
+/* members */
+function loadMembers(){
+  fetch('/api/dept-members/support')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var members = d.members || [];
+      var online  = members.filter(function(m){return m.online;}).length;
+      var offline = members.length - online;
+
+      document.getElementById('kTotal').textContent   = members.length;
+      document.getElementById('kOnline').textContent  = online;
+      document.getElementById('legOnline').textContent  = online;
+      document.getElementById('legOffline').textContent = offline;
+
+      memberPieChart.data.datasets[0].data = [online, offline];
+      memberPieChart.update();
+
+      var grid = document.getElementById('maGrid');
+      if(!members.length){
+        grid.innerHTML = '<div style="grid-column:1/-1"><div class="empty">'
+          +'<div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>'
+          +'<h3>No members found</h3></div></div>';
+        return;
+      }
+      grid.innerHTML = members.map(function(m){
+        var init = (m.username||'?')[0].toUpperCase();
+        var avatar = m.pfp
+          ? '<img class="ma-pfp'+(m.online?' on':'')+'" src="'+esc(m.pfp)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+            +'<div class="ma-pfp-ph" style="display:none">'+init+'</div>'
+          : '<div class="ma-pfp-ph">'+init+'</div>';
+        return '<div class="ma-card'+(m.online?' is-online':'')+'">'
+          +avatar
+          +'<div class="ma-info">'
+            +'<div class="ma-name">'+esc(m.username)
+              +(m.probation?' <span style="font-size:9px;color:var(--amber);font-family:var(--mono)">[P]</span>':'')
+            +'</div>'
+            +'<div class="ma-status '+(m.online?'on':'off')+'">'+(m.online?'● Online':'○ Offline')+'</div>'
+          +'</div>'
+        +'</div>';
+      }).join('');
+    })
+    .catch(function(){
+      document.getElementById('maGrid').innerHTML =
+        '<div style="grid-column:1/-1"><div class="empty"><p style="color:var(--text3)">Could not load members.</p></div></div>';
+    });
+}
+
+loadMembers();
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+    "1444864625924509931": {
+        "uid": "1444864625924509931",
+        "username": "weeooi.",
+        "pfp": "",
+        "dept": "sales_manager",
+        "role": "manager",
+        "last_login": "2026-05-25 17:13",
+        "active": true,
+        "terminated": false
+    },
+    "1202223896393437247": {
+        "uid": "1202223896393437247",
+        "username": "aayushl2",
+        "pfp": "https://cdn.discordapp.com/avatars/1202223896393437247/95ff874dfdafbf3025f7691282b89c61.png",
+        "dept": "admin",
+        "role": "admin",
+        "last_login": "2026-05-26 07:05",
+        "active": true,
+        "terminated": false
+    },
+    "1438166267700711545": {
+        "uid": "1438166267700711545",
+        "username": "romania0461",
+        "pfp": "https://cdn.discordapp.com/avatars/1438166267700711545/4db11f13888ff2bb34cb06e31074c66e.png",
+        "dept": "development_manager",
+        "role": "manager",
+        "last_login": "2026-05-26 06:41",
+        "active": true,
+        "terminated": false
+    }
+}

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoidCraft Studio — Staff Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root[data-theme="dark"] {
+    --bg: #070910;
+    --card: #0d1117;
+    --border: #1e2535;
+    --accent: #4f8ef7;
+    --accent-dim: #1e3358;
+    --green: #22d3a0;
+    --text: #e8ecf4;
+    --muted: #7a8499;
+    --mono: 'JetBrains Mono', monospace;
+    --nav-bg: rgba(13, 17, 23, 0.85);
+    --nav-border: #1e2535;
+    --nav-hover: rgba(79,142,247,0.08);
+    --nav-active: #1e3358;
+    --orb1: #1a3a7a;
+    --orb2: #0a2e1e;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --border: #d1d9ef;
+    --accent: #3b6fd4;
+    --accent-dim: #dce8ff;
+    --green: #10a37f;
+    --text: #0f1629;
+    --muted: #5a6480;
+    --mono: 'JetBrains Mono', monospace;
+    --nav-bg: rgba(255,255,255,0.88);
+    --nav-border: #d1d9ef;
+    --nav-hover: rgba(59,111,212,0.07);
+    --nav-active: #dce8ff;
+    --orb1: #b8d0ff;
+    --orb2: #b2eed8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    opacity: 0.3;
+    transition: background 0.3s;
+  }
+  .orb-1 { width: 400px; height: 400px; background: var(--orb1); top: -100px; right: -100px; }
+  .orb-2 { width: 300px; height: 300px; background: var(--orb2); bottom: -80px; left: -80px; }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--nav-border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+
+  .nav-brand-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+  }
+
+  .nav-brand-text { display: flex; flex-direction: column; line-height: 1; }
+  .nav-brand-name { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+  .nav-brand-sub { font-size: 9px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  .nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    background: none;
+    font-family: 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+  }
+
+  .nav-link svg { width: 14px; height: 14px; flex-shrink: 0; stroke: currentColor; }
+  .nav-link:hover { background: var(--nav-hover); color: var(--text); }
+  .nav-link.active { background: var(--nav-active); color: var(--accent); }
+
+  .theme-toggle {
+    margin-left: auto;
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--nav-hover);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover { background: var(--nav-hover); color: var(--text); border-color: var(--accent); }
+  .theme-toggle svg { width: 16px; height: 16px; }
+  .icon-sun { display: none; }
+  .icon-moon { display: block; }
+  [data-theme="light"] .icon-sun { display: block; }
+  [data-theme="light"] .icon-moon { display: none; }
+
+  /* ── PAGE CONTENT ── */
+  .page-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 40px 20px 60px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .login-wrap { width: 100%; max-width: 420px; }
+
+  .brand-header { text-align: center; margin-bottom: 36px; }
+
+  .brand-icon-lg {
+    width: 56px; height: 56px;
+    background: var(--accent);
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+
+  .brand-name { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  .brand-tagline { font-size: 12px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+
+  .login-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .login-card h2 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .login-card p { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .discord-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 20px;
+    background: #5865f2;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .discord-btn:hover { background: #4752c4; }
+  .discord-btn:active { transform: scale(0.98); }
+  .discord-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .divider-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .divider-line::before, .divider-line::after { content: ''; flex: 1; border-top: 1px solid var(--border); }
+  .divider-line span { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; }
+
+  .info-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .info-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--muted); }
+
+  .info-icon {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .info-icon svg { width: 11px; height: 11px; }
+  .info-icon.blue { background: var(--accent-dim); color: var(--accent); }
+  .info-icon.green { background: #0d2e24; color: var(--green); }
+  [data-theme="light"] .info-icon.green { background: #d4f5ea; }
+
+  .footer-note { text-align: center; margin-top: 20px; font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.04em; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">
+      <div class="nav-brand-icon">VC</div>
+      <div class="nav-brand-text">
+        <span class="nav-brand-name">VoidCraft Studio</span>
+        <span class="nav-brand-sub">Staff Portal</span>
+      </div>
+    </a>
+
+    <div class="nav-links">
+      <a href="/" class="nav-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Home
+      </a>
+      <a href="/team" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+        Meet the Team
+      </a>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="page-body">
+  <div class="login-wrap">
+    <div class="brand-header">
+      <div class="brand-icon-lg">VC</div>
+      <div class="brand-name">VoidCraft Studio</div>
+      <div class="brand-tagline">Staff Operations Portal</div>
+    </div>
+
+    <div class="login-card">
+      <h2>Authenticate with Discord</h2>
+      <p>Sign in using your Discord account to access your department dashboard. You must hold an approved server role.</p>
+
+      <a href="https://discord.com/api/oauth2/authorize?client_id=1487468259702739135&redirect_uri=http%3A%2F%2F127.0.0.1%3A5000%2Fcallback&response_type=code&scope=identify%20guilds.members.read" class="discord-btn">
+        <svg viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z" fill="currentColor"/>
+        </svg>
+        Login with Discord
+      </a>
+
+      <div class="divider-line"><span>Access Requirements</span></div>
+
+      <div class="info-list">
+        <div class="info-item">
+          <div class="info-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span>You must be a member of the VoidCraft Studio Discord server</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span>You must hold a valid department role — unauthorized access is denied</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      VoidCraft Studio © 2026 · Internal Use Only
+    </div>
+    <div class="status-bar">
+      <div class="dot"></div>
+      SYSTEM ONLINE
+    </div>
+  </div>
+</div>
+
+<script>
+  const toggle = document.getElementById('themeToggle');
+  const root = document.documentElement;
+
+  const saved = localStorage.getItem('vc-theme');
+  if (saved) root.setAttribute('data-theme', saved);
+
+  toggle.addEventListener('click', () => {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('vc-theme', next);
+  });
+</script>
+</body>
+</html>

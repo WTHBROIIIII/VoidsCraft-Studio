@@ -1,0 +1,200 @@
+{% extends "support/base_support.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+
+{% block head %}
+<style>
+.quota-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.quota-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.quota-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:6px}
+.quota-val{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1}
+.quota-target{font-size:11px;color:var(--text2);margin-top:3px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.step-item{display:flex;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;font-family:var(--mono)}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.step-body{font-size:12px;color:var(--text2);line-height:1.5}
+.step-body code{background:var(--card);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px;color:var(--accent)}
+.warning-box{background:var(--red-dim);border:1px solid rgba(240,90,90,.3);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--red);display:flex;gap:8px;align-items:flex-start;margin-bottom:16px}
+.warning-box svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+.prob-notice{background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--amber);display:flex;gap:8px;align-items:flex-start}
+.prob-notice svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+
+<div class="welcome">
+  <h1>Welcome, {{ username }} 🎧</h1>
+  <p>Customer Support Operations — Quota tracking and ticket procedures.</p>
+</div>
+
+<div class="main-grid">
+  <div class="col-left">
+
+    <!-- QUOTA TRACKER -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Fortnightly Quota (15 Days)
+        {% if prob %}<span class="badge amber" style="margin-left:auto">Probation −30%</span>{% endif %}
+      </div>
+
+      <div class="warning-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Not completing the quota of <strong>8 tickets per 15 days</strong> will result in a <strong>50–90% pay deduction</strong> or immediate termination.</span>
+      </div>
+
+      {% set tickets_done = 0 %}
+      {% set quota_target = 8 %}
+      {% set quota_pct = 0 %}
+
+      <div class="quota-grid">
+        <div class="quota-card">
+          <div class="quota-label">Tickets Logged</div>
+          <div class="quota-val" style="color:var(--accent)">{{ tickets_done }}</div>
+          <div class="quota-target">Target: {{ quota_target }} per fortnight</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:{{ quota_pct }}%;background:var(--accent)"></div>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text2)">Logged via ticket-logs channel</div>
+        </div>
+        <div class="quota-card">
+          <div class="quota-label">Period</div>
+          <div class="quota-val" style="font-size:18px;color:var(--text)">15 Days</div>
+          <div class="quota-target">Resets every fortnight</div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text2);line-height:1.6">
+            Log tickets via the <strong style="color:var(--text)">ticket logs channel</strong> after saving transcript.
+          </div>
+        </div>
+      </div>
+
+      {% if prob %}
+      <div class="prob-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>You are on <strong>probation</strong>. All pay rates are <strong>30% reduced</strong> from standard until probation is lifted.</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TICKET PROCEDURE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        How to Solve Tickets
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Opening Line — No Problem Stated Yet</div>
+          <div class="step-body">If the ticket opener hasn't said anything yet, use:<br>
+          <code>"Hey! I'm [your name] from the customer support department, how may I assist you today?"</code></div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Opening Line — Problem Already Stated</div>
+          <div class="step-body">If they've described their issue, use:<br>
+          <code>"Hey! I'm [your name] from the customer support department, I will be assisting you with this ticket."</code></div>
+        </div>
+      </div>
+
+      <div class="step-item" style="border-color:rgba(245,166,35,.25)">
+        <div class="step-num" style="background:var(--amber-dim);border-color:var(--amber);color:var(--amber)">3</div>
+        <div>
+          <div class="step-title">Wrong Ticket Type?</div>
+          <div class="step-body">If a user opened the wrong ticket type (e.g. general ticket for a purchase), tell them to open the correct one. Use your judgment — if it's a question, solve it yourself regardless of ticket category.</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Ticket Transfer</div>
+          <div class="step-body">If you cannot solve the issue, ask a colleague in the staff server if they can take over. <strong style="color:var(--text)">This is teamwork, not a competition.</strong></div>
+        </div>
+      </div>
+
+      <div class="step-item" style="border-color:rgba(34,211,160,.25)">
+        <div class="step-num" style="background:var(--green-dim);border-color:var(--green);color:var(--green)">5</div>
+        <div>
+          <div class="step-title">How to Log</div>
+          <div class="step-body">Download the transcript from the <strong style="color:var(--text)">transcripts channel</strong> in the main server (after saving transcript), then log it in the <strong style="color:var(--text)">ticket logs channel</strong>.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col-left -->
+
+  <div class="col-right">
+
+    <!-- BROADCASTS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Targeted Broadcasts
+      </div>
+      {% if broadcasts %}
+        {% for b in broadcasts[:5] %}
+        <div class="bc-item">
+          <div class="bc-dept">{{ b.dept_name or 'All Depts' }}</div>
+          <div class="bc-title">{{ b.title }}</div>
+          <div class="bc-body">{{ b.content }}</div>
+          <div class="bc-time">{{ b.author or 'Admin' }} · {{ b.timestamp }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><p>No active broadcasts</p></div>
+      {% endif %}
+    </div>
+
+    <!-- JOB DIRECTIVES -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Active Job Directives
+      </div>
+      {% if directives %}
+        {% for job in directives[:4] %}
+        <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">{{ job.title }}</div>
+            <span class="badge {% if job.priority=='High' %}red{% elif job.priority=='Medium' %}amber{% else %}green{% endif %}">{{ job.priority or '—' }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">{{ job.content }}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">📅 {{ job.deadline or '—' }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty" style="padding:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;opacity:.3;display:block;margin:0 auto 6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><p>No active directives</p></div>
+      {% endif %}
+    </div>
+
+    <!-- DISCORD PROFILE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 71 55" fill="currentColor" style="width:16px;height:16px;color:var(--accent)"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+        Discord Profile
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        {% if pfp %}<img src="{{ pfp }}" style="width:46px;height:46px;border-radius:50%;border:2px solid var(--accent)" alt="pfp"/>
+        {% else %}<div style="width:46px;height:46px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--accent)">{{ (username or 'S')[0].upper() }}</div>{% endif %}
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">{{ username }}</div>
+          <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">ID: {{ uid }}</div>
+          <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+            <span class="badge accent"><span class="badge-dot"></span>Support</span>
+            {% if probation %}<span class="badge amber"><span class="badge-dot"></span>Probation</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

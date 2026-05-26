@@ -1,0 +1,420 @@
+{% extends "investigation/base_investigation.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+
+{% block head %}
+<style>
+.pay-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:800px){.pay-grid{grid-template-columns:1fr 1fr}}
+.pay-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.pay-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:4px}
+.pay-score{font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:6px}
+.pay-val{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.pay-val.prob{color:var(--amber)}
+.step-list{display:flex;flex-direction:column;gap:10px}
+.step-item{display:flex;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0;font-family:var(--mono)}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.step-body{font-size:12px;color:var(--text2);line-height:1.5}
+.step-body strong{color:var(--accent)}
+.activity-banner{background:linear-gradient(135deg,rgba(79,142,247,.1) 0%,rgba(167,139,250,.06) 100%);border:1px solid rgba(79,142,247,.25);border-radius:var(--r);padding:14px 16px;margin-bottom:16px}
+.activity-banner-title{font-size:12px;font-weight:700;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.activity-banner-title svg{width:14px;height:14px}
+.activity-banner-body{font-size:12px;color:var(--text2);line-height:1.7}
+.activity-banner-body strong{color:var(--text)}
+.prob-notice{background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--r);padding:12px 14px;margin-top:12px;font-size:12px;color:var(--amber);display:flex;gap:8px;align-items:flex-start}
+.chart-wrap{height:200px;position:relative}
+
+/* ── CASE LOG FORM ── */
+.case-form{display:flex;flex-direction:column;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.form-row{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3)}
+.form-input,.form-select,.form-textarea{
+  background:var(--bg, #0a0e16);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:8px 11px;
+  color:var(--text);
+  font-size:12px;
+  font-family:var(--mono);
+  outline:none;
+  transition:border-color .15s;
+  width:100%;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-textarea{resize:vertical;min-height:70px}
+.form-select option{background:var(--card2,#111620)}
+.submit-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--accent);color:#fff;border:none;border-radius:var(--r);
+  padding:10px 22px;font-size:13px;font-weight:600;font-family:var(--mono);
+  cursor:pointer;transition:opacity .15s;margin-top:4px;align-self:flex-start;
+}
+.submit-btn:hover{opacity:.85}
+.submit-btn svg{width:15px;height:15px}
+.flash-success{background:var(--green-dim,#0d2e24);border:1px solid var(--green,#22d3a0);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--green,#22d3a0);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+
+<div class="welcome">
+  <h1>Welcome, {{ username }} 🔍</h1>
+  <p>Internal Affairs Operations — Case management and investigation tracking.</p>
+</div>
+
+<div class="main-grid">
+  <div class="col-left">
+
+    <!-- SUBMIT CASE LOG FORM -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Submit Case Log
+      </div>
+
+      {% if request.args.get('submitted') == '1' %}
+      <div class="flash-success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Case log submitted successfully! Sent to review channel for approval.
+      </div>
+      {% endif %}
+
+      <form class="case-form" method="POST" action="/api/submit-case-log">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">User Who Is Reported *</label>
+            <input class="form-input" type="text" name="reported_user" placeholder="e.g. username#0000" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">User Who Has Reported *</label>
+            <input class="form-input" type="text" name="reporting_user" placeholder="e.g. username#0000" required/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Investigator *</label>
+            <input class="form-input" type="text" name="investigator" placeholder="Your username" value="{{ username }}" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Investigation *</label>
+            <input class="form-input" type="date" name="date" required/>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Outcome *</label>
+            <select class="form-select" name="outcome" required>
+              <option value="" disabled selected>Select outcome…</option>
+              <option value="Guilty">Guilty</option>
+              <option value="Innocent">Innocent</option>
+              <option value="Inconclusive">Inconclusive</option>
+              <option value="N/A">N/A</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Google Doc Link *</label>
+            <input class="form-input" type="url" name="doc_link" placeholder="https://docs.google.com/…" required/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason / Summary *</label>
+          <textarea class="form-textarea" name="reason" placeholder="Describe the reason for the investigation and key findings…" required></textarea>
+        </div>
+
+        <button class="submit-btn" type="submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Submit for Review
+        </button>
+      </form>
+    </div>
+
+    <!-- CASE SUBMISSION PROCESS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Standardised Case Submission Process
+      </div>
+
+      <div class="activity-banner">
+        <div class="activity-banner-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          IA Activity Requirements
+        </div>
+        <div class="activity-banner-body">
+          All IA members are expected to maintain an <strong>active presence</strong> and consistently handle investigation tickets. If you go inactive without filing an official <strong>LOA (Leave of Absence)</strong>, you risk <strong>immediate termination</strong> from the Internal Affairs team. We are handling a high volume of cases — we only have room for active investigators.
+        </div>
+      </div>
+
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Submit via the Form Above</div>
+            <div class="step-body">Fill in all fields and click Submit. Your case is automatically sent to <strong>🔍┇report-review</strong> for management approval.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Wait for Manager Approval</div>
+            <div class="step-body">IA Management will review your submission and accept or deny it via the bot commands. Do not resubmit while pending.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Accepted → Posted to Case Logs</div>
+            <div class="step-body">Once accepted, the case is automatically posted to the <strong>official case logs channel</strong>. It will also appear in your dashboard and the admin panel.</div>
+          </div>
+        </div>
+        <div class="step-item" style="border-color:rgba(240,90,90,.25);background:rgba(240,90,90,.04)">
+          <div class="step-num" style="background:var(--red-dim);border-color:var(--red);color:var(--red)">4</div>
+          <div>
+            <div class="step-title" style="color:var(--red)">Management Posts to Public Blacklist</div>
+            <div class="step-body">IA Management will handle posting to the public blacklist. <strong style="color:var(--red)">Do NOT post to the public blacklist yourself.</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAY STRUCTURE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Case Pay Structure (Score-Based)
+        {% if prob %}<span class="badge amber" style="margin-left:auto">Probation −30%</span>{% endif %}
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+        Pay is determined by the <strong style="color:var(--text)">quality score</strong> assigned to each case after review. Scores are based on Logical Reasoning, Format, Accuracy, and Grammar — each rated out of 10. Average score determines the quality tier and corresponding Robux payout.
+      </div>
+
+      {% if prob %}
+      <div class="prob-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>You are on <strong>probation</strong>. All pay rates shown are <strong>30% reduced</strong>. Rates unlock fully upon completing probation.</span>
+      </div>
+      {% endif %}
+
+      <div class="pay-grid" style="margin-top:14px">
+        <div class="pay-card" style="border-color:var(--red-dim)">
+          <div class="pay-label">Poor Quality</div>
+          <div class="pay-score">Score: 0–24 avg</div>
+          <div class="pay-val {% if prob %}prob{% endif %}">{% if prob %}17R${% else %}25R${% endif %}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Needs significant improvement</div>
+        </div>
+        <div class="pay-card">
+          <div class="pay-label">Average Quality</div>
+          <div class="pay-score">Score: 25–34 avg</div>
+          <div class="pay-val {% if prob %}prob{% endif %}">{% if prob %}21R${% else %}30R${% endif %}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Meets basic standards</div>
+        </div>
+        <div class="pay-card" style="border-color:rgba(79,142,247,.25)">
+          <div class="pay-label">Good Quality</div>
+          <div class="pay-score">Score: 35–44 avg</div>
+          <div class="pay-val {% if prob %}prob{% endif %}" style="color:{% if not prob %}var(--blue){% else %}var(--amber){% endif %}">{% if prob %}31.5R${% else %}45R${% endif %}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Above expectations</div>
+        </div>
+        <div class="pay-card" style="border-color:rgba(34,211,160,.25)">
+          <div class="pay-label">Excellent Quality</div>
+          <div class="pay-score">Score: 40–50 avg</div>
+          <div class="pay-val {% if prob %}prob{% endif %}" style="color:{% if not prob %}var(--green){% else %}var(--amber){% endif %}">{% if prob %}42R${% else %}60R${% endif %}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Exceptional work</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text2)">
+        <strong style="color:var(--text)">Scoring Criteria:</strong> Each case is evaluated on Logical Reasoning & Conclusion, Format, Accuracy, and Grammar — each out of 10. The average score across all criteria determines the quality tier. N/A cases receive no pay.
+      </div>
+    </div>
+
+    <!-- RECENT INVESTIGATION LOGS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        My Recent Investigation Logs
+      </div>
+      {% set ilogs = investigation_logs %}
+      {% if ilogs and ilogs|length > 0 %}
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Case #</th>
+              <th>Reported User</th>
+              <th>Outcome</th>
+              <th>Doc</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in ilogs[:8] %}
+            {% set d = log.details if log.details is mapping else {} %}
+            <tr>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">{{ log.id }}</td>
+              <td class="pri mono">{{ d.get('case_number','—') or '—' }}</td>
+              <td>{{ d.get('reported_user','—') or '—' }}</td>
+              <td>
+                {% set outcome = d.get('outcome','—') or '—' %}
+                <span class="badge {% if 'guilty' in outcome.lower() %}red{% elif 'innocent' in outcome.lower() %}green{% else %}amber{% endif %}">{{ outcome }}</span>
+              </td>
+              <td>{% if log.proof %}<a href="{{ log.proof }}" target="_blank" class="proof-link">View ↗</a>{% else %}—{% endif %}</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">{{ log.timestamp or '—' }}</td>
+              <td><span class="badge {% if log.status=='Accepted' %}green{% elif log.status=='Denied' %}red{% else %}amber{% endif %}"><span class="badge-dot"></span>{{ log.status or 'Pending' }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>No investigation logs yet. Submit your first case using the form above.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /col-left -->
+
+  <div class="col-right">
+
+    <!-- QUICK STATS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Case Statistics
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% set total_i = investigation_logs|length %}
+        {% set acc_i = accepted_investigation|length %}
+        {% set pend_i = pending_logs|selectattr('type','equalto','Investigation')|list|length %}
+        {% set den_i = denied_logs|selectattr('type','equalto','Investigation')|list|length %}
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Total Cases</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--accent)">{{ total_i }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Accepted</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)">{{ acc_i }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--green)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Pending Review</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--amber)">{{ pend_i }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3);margin-bottom:2px">Denied</div><div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--red)">{{ den_i }}</div></div>
+          <svg style="width:26px;height:26px;opacity:.4;color:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Case Breakdown
+      </div>
+      <div class="chart-wrap"><canvas id="invChart"></canvas></div>
+    </div>
+
+    <!-- BROADCASTS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Targeted Broadcasts
+      </div>
+      {% if broadcasts and broadcasts|length > 0 %}
+        {% for b in broadcasts[:4] %}
+        <div class="bc-item">
+          <div class="bc-dept">{{ b.dept_name or 'All Depts' }}</div>
+          <div class="bc-title">{{ b.title }}</div>
+          <div class="bc-body">{{ b.content }}</div>
+          <div class="bc-time">{{ b.author or 'Admin' }} · {{ b.timestamp }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><p>No broadcasts</p></div>
+      {% endif %}
+    </div>
+
+    <!-- JOB DIRECTIVES -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Active Job Directives
+      </div>
+      {% if directives and directives|length > 0 %}
+        {% for job in directives[:3] %}
+        <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">{{ job.title }}</div>
+            <span class="badge {% if job.priority=='High' %}red{% elif job.priority=='Medium' %}amber{% else %}green{% endif %}">{{ job.priority or '—' }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">{{ job.content }}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">📅 {{ job.deadline or '—' }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty" style="padding:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;opacity:.3;display:block;margin:0 auto 6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><p>No directives</p></div>
+      {% endif %}
+    </div>
+
+    <!-- DISCORD PROFILE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 71 55" fill="currentColor" style="width:16px;height:16px;color:var(--accent)"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+        Discord Profile
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        {% if pfp %}<img src="{{ pfp }}" style="width:46px;height:46px;border-radius:50%;border:2px solid var(--accent)" alt="pfp"/>
+        {% else %}<div style="width:46px;height:46px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--accent)">{{ (username or 'I')[0].upper() }}</div>{% endif %}
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">{{ username }}</div>
+          <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">ID: {{ uid }}</div>
+          <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+            <span class="badge accent"><span class="badge-dot"></span>Internal Affairs</span>
+            {% if probation %}<span class="badge amber"><span class="badge-dot"></span>Probation</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const acc = {{ accepted_investigation|length }};
+const pend = {{ pending_logs|selectattr('type','equalto','Investigation')|list|length }};
+const den = {{ denied_logs|selectattr('type','equalto','Investigation')|list|length }};
+new Chart(document.getElementById('invChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['Accepted','Pending','Denied'],
+    datasets:[{
+      data:[acc,pend,den],
+      backgroundColor:['rgba(34,211,160,.2)','rgba(245,166,35,.2)','rgba(240,90,90,.2)'],
+      borderColor:['#22d3a0','#f5a623','#f05a5a'],
+      borderWidth:1.5,borderRadius:5
+    }]
+  },
+  options:{
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b93a8',font:{family:'JetBrains Mono',size:10}}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#8b93a8',font:{family:'JetBrains Mono',size:10},stepSize:1}}
+    }
+  }
+});
+</script>
+{% endblock %}

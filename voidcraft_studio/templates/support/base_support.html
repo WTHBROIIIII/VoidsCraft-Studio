@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VoidCraft — {% block title %}Support{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0b0f;--panel:#111318;--card:#16181f;--card2:#1c1f28;--border:#1f2333;--border2:#2a2f42;--accent:#22d3a0;--accent-dim:rgba(34,211,160,0.15);--green:#22d3a0;--green-dim:rgba(34,211,160,0.12);--red:#f05a5a;--red-dim:rgba(240,90,90,0.12);--amber:#f5a623;--amber-dim:rgba(245,166,35,0.12);--blue:#4f8ef7;--blue-dim:rgba(79,142,247,0.12);--purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);--text:#e8ecf4;--text2:#8b93a8;--text3:#4a5168;--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;--r:8px;--r2:12px;--nav-h:56px}
+[data-theme="light"]{--bg:#f0f2f7;--panel:#fff;--card:#f7f8fc;--card2:#eef0f6;--border:#dde0ec;--border2:#c8ccd8;--text:#1a1d2e;--text2:#5a5f7a;--text3:#9095b0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6}
+.navbar{height:var(--nav-h);background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:100}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.nav-logo{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#0a0b0f}
+.nav-tabs{display:flex;gap:4px;flex:1;justify-content:center}
+.nav-tab{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);text-decoration:none;font-size:13px;font-weight:500;color:var(--text2);border:1px solid transparent;transition:all .15s}
+.nav-tab svg{width:15px;height:15px}
+.nav-tab:hover{background:var(--card);color:var(--text)}
+.nav-tab.active{background:var(--accent);color:#0a0b0f;font-weight:600}
+.nav-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.theme-btn{width:32px;height:32px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s}
+.theme-btn:hover{border-color:var(--border2);color:var(--text)}
+.theme-btn svg{width:16px;height:16px}
+.nav-pfp{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
+.nav-pfp-ph{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent)}
+.logout-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:5px;border-radius:var(--r);transition:color .15s;text-decoration:none;display:flex;align-items:center}
+.logout-btn:hover{color:var(--red)}
+.logout-btn svg{width:16px;height:16px}
+.prob-bar{background:var(--amber-dim);border-bottom:1px solid var(--amber);padding:8px 24px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--amber)}
+.page{padding:28px;max-width:1400px;margin:0 auto}
+.welcome h1{font-size:24px;font-weight:700;margin-bottom:4px}
+.welcome p{font-size:13px;color:var(--text2);margin-bottom:24px}
+.main-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.col-left{display:flex;flex-direction:column;gap:20px}
+.col-right{display:flex;flex-direction:column;gap:20px}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:20px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;margin-bottom:16px}
+.card-title svg{width:16px;height:16px;color:var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.green{background:var(--green-dim);color:var(--green)}
+.badge.red{background:var(--red-dim);color:var(--red)}
+.badge.amber{background:var(--amber-dim);color:var(--amber)}
+.badge.blue{background:var(--blue-dim);color:var(--blue)}
+.badge.purple{background:var(--purple-dim);color:var(--purple)}
+.badge.accent{background:var(--accent-dim);color:var(--accent)}
+.bc-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.bc-item:last-child{border-bottom:none}
+.bc-dept{font-size:10px;font-family:var(--mono);text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.bc-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.bc-body{font-size:12px;color:var(--text2);line-height:1.5}
+.bc-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:5px}
+.empty{text-align:center;padding:28px;color:var(--text3)}
+.empty svg{width:28px;height:28px;opacity:.3;display:block;margin:0 auto 8px}
+.empty p{font-size:12px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+{% if probation %}
+<div class="prob-bar">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <strong>PROBATION ACTIVE</strong> — Pay is 30% reduced. Contact Customer Support Management to review.
+</div>
+{% endif %}
+<nav class="navbar">
+  <a href="/portal/support/dashboard" class="nav-brand">
+    <div class="nav-logo">CS</div>
+    <div style="line-height:1.2">
+      <div style="font-size:14px;font-weight:700;color:var(--text)">VoidsCraft</div>
+      <div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em">Customer Support</div>
+    </div>
+  </a>
+  <div class="nav-tabs">
+    <a href="/portal/support/dashboard" class="nav-tab {% block tab_dash %}{% endblock %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+    </a>
+    <a href="/portal/support/information" class="nav-tab {% block tab_info %}{% endblock %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Information
+    </a>
+    <a href="/portal/support/chain-of-command" class="nav-tab {% block tab_chain %}{% endblock %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="11"/><rect x="3" y="11" width="6" height="4" rx="1"/><rect x="9" y="11" width="6" height="4" rx="1"/><rect x="15" y="11" width="6" height="4" rx="1"/></svg>Chain of Command
+    </a>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <div style="display:flex;align-items:center;gap:8px">
+      {% if pfp %}<img src="{{ pfp }}" class="nav-pfp" alt="pfp"/>
+      {% else %}<div class="nav-pfp-ph">{{ (username or 'S')[0].upper() }}</div>{% endif %}
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">{{ username or 'Agent' }}</div>
+        <div style="font-size:10px;color:var(--green);font-family:var(--mono)">● Online{% if probation %} · Probation{% endif %}</div>
+      </div>
+    </div>
+    <a href="/logout" class="logout-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
+  </div>
+</nav>
+<div class="page">{% block content %}{% endblock %}</div>
+<script>
+function toggleTheme(){const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');localStorage.setItem('vc_theme',d?'light':'dark');updateIcon(!d);}
+function updateIcon(dark){const i=document.getElementById('themeIcon');if(!i)return;i.innerHTML=dark?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>':'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';}
+(function(){const t=localStorage.getItem('vc_theme')||'dark';document.documentElement.setAttribute('data-theme',t);updateIcon(t==='dark');})();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

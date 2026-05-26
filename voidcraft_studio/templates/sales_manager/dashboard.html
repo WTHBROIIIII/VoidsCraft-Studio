@@ -1,0 +1,592 @@
+{% extends "sales_manager/base_salesmanager.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+/* ── QUICK STATS ROW ── */
+.quick-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:900px){.quick-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.quick-stats{grid-template-columns:1fr}}
+
+/* ── CHART TABS ── */
+.chart-tabs{display:flex;gap:4px}
+.ctab{
+  padding:5px 12px;border-radius:var(--r);font-size:11.5px;font-weight:500;
+  color:var(--text3);cursor:pointer;transition:all .15s;border:1px solid transparent;
+  font-family:var(--font);background:none;
+}
+.ctab.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(240,180,41,0.3)}
+.ctab:hover:not(.active){color:var(--text2)}
+.chart-wrap{position:relative;height:200px}
+
+/* ── LOG FILTER BAR ── */
+.log-filter-bar{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{
+  padding:5px 12px;border-radius:var(--r);font-size:11.5px;font-weight:500;
+  color:var(--text3);cursor:pointer;border:1px solid var(--border);background:none;
+  transition:all .15s;font-family:var(--font);
+}
+.filter-btn.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(240,180,41,0.3)}
+.filter-btn:hover:not(.active){border-color:var(--border2);color:var(--text2)}
+.filter-search{
+  margin-left:auto;padding:5px 12px;border-radius:var(--r);
+  font-size:12px;background:var(--input);border:1px solid var(--border);
+  color:var(--text);font-family:var(--font);outline:none;width:180px;transition:border-color .15s;
+}
+.filter-search:focus{border-color:var(--gold)}
+.filter-search::placeholder{color:var(--text4)}
+
+/* ── TYPE CHIP ── */
+.type-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:4px;font-size:10px;
+  font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.04em;
+}
+.type-chip.sales{background:var(--gold-dim);color:var(--gold)}
+.type-chip.outreach{background:var(--purple-dim);color:var(--purple)}
+
+/* ── PROOF LINK ── */
+.proof-link{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;color:var(--blue);text-decoration:none;
+  padding:2px 7px;border-radius:4px;background:var(--blue-dim);border:1px solid rgba(79,142,247,0.2);
+  transition:opacity .15s;
+}
+.proof-link:hover{opacity:.75}
+.proof-link svg{width:10px;height:10px}
+.no-proof{font-size:11px;color:var(--text4);font-family:var(--mono)}
+
+/* ── TEAM PANEL ── */
+.team-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.online-count{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:11px;color:var(--green);
+  background:var(--green-dim);padding:3px 8px;border-radius:4px;
+  border:1px solid rgba(34,211,160,0.2);
+}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.member-list{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;padding-right:4px}
+.member-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r2);
+  background:var(--card2);border:1px solid var(--border);transition:border-color .15s;
+}
+.member-card:hover{border-color:var(--border2)}
+.member-pfp-wrap{position:relative;flex-shrink:0}
+.member-pfp{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
+.member-pfp-ph{
+  width:34px;height:34px;border-radius:50%;background:var(--card3);border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0;
+}
+.member-status{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--card2)}
+.member-status.online{background:var(--green);box-shadow:0 0 5px var(--green)}
+.member-status.offline{background:var(--text4)}
+.member-info{flex:1;min-width:0}
+.member-name{font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-meta{font-size:10px;color:var(--text3);font-family:var(--mono);display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap}
+.member-meta-sep{color:var(--text4)}
+.member-tag{font-size:9px;padding:1px 5px;border-radius:3px}
+.loading-spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:spin .6s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOP PERFORMERS ── */
+.performer-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.performer-row:last-child{border-bottom:none}
+.performer-rank{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:10px;font-weight:800;
+}
+.performer-rank.r1{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(240,180,41,0.4)}
+.performer-rank.r2{background:var(--card3);color:var(--text2);border:1px solid var(--border)}
+.performer-rank.r3{background:var(--card3);color:var(--text3);border:1px solid var(--border)}
+.performer-pfp-ph{
+  width:28px;height:28px;border-radius:50%;background:var(--card3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:var(--text3);font-family:var(--display);
+  flex-shrink:0;border:1.5px solid var(--border);
+}
+.performer-name{font-size:12px;font-weight:600;color:var(--text);flex:1}
+.performer-count{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:500}
+
+/* ── BROADCAST ITEMS ── */
+.bc-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.bc-item:last-child{border-bottom:none}
+.bc-badge{font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:3px}
+.bc-title{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.3}
+.bc-body{font-size:11.5px;color:var(--text2);line-height:1.5}
+.bc-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:5px}
+
+/* ── PENDING PULSE ── */
+@keyframes pulsering{
+  0%{box-shadow:0 0 0 0 rgba(245,166,35,0.5)}
+  70%{box-shadow:0 0 0 8px rgba(245,166,35,0)}
+  100%{box-shadow:0 0 0 0 rgba(245,166,35,0)}
+}
+.pulse-amber{animation:pulsering 2s ease-in-out infinite}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{#
+  ── MACRO: replaces normalize_log_type() Python call.
+     Normalises common variants so the template works without
+     the helper being registered in the Jinja env.
+#}
+{% macro log_type(raw) %}
+  {%- set t = (raw or '')|lower|trim -%}
+  {%- if   t in ['sales','sale','💰 sales'] -%}Sales
+  {%- elif t in ['outreach','out','📡 outreach'] -%}Outreach
+  {%- else -%}{{ raw or 'Unknown' }}
+  {%- endif -%}
+{% endmacro %}
+
+{# ─── WELCOME HEADER ─── #}
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-header-eyebrow">Sales Department</div>
+    <h1 class="page-title">Welcome back, <span>{{ username }}</span></h1>
+    <p class="page-sub">Here's your team's performance overview for today — {{ now().strftime('%A, %B %d %Y') }}</p>
+  </div>
+  <div class="page-header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="refreshTeam()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Refresh Team
+    </button>
+    <a href="/manager/sales_manager/job-creator" class="btn btn-gold btn-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      New Directive
+    </a>
+  </div>
+</div>
+
+{# ─── QUICK STAT ROW ─── #}
+<div class="quick-stats">
+  {% set total_sales = sales_logs|length %}
+  {% set acc_sales   = accepted_sales|length %}
+  {% set pend_sales  = pending_logs|selectattr('type','equalto','Sales')|list|length %}
+  {% set den_sales   = denied_logs|selectattr('type','equalto','Sales')|list|length %}
+
+  <div class="stat-card gold">
+    <div class="stat-top">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="stat-delta up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><polyline points="18 15 12 9 6 15"/></svg>All Time</div>
+    </div>
+    <div class="stat-value">{{ acc_sales }}</div>
+    <div class="stat-label">Accepted Sales</div>
+    <div class="stat-sub">{{ total_sales }} total · {{ pend_sales }} pending</div>
+  </div>
+
+  <div class="stat-card purple">
+    <div class="stat-top">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <div class="stat-delta neutral">Total</div>
+    </div>
+    <div class="stat-value">{{ outreach_logs|length }}</div>
+    <div class="stat-label">Outreach Logs</div>
+    <div class="stat-sub">{{ accepted_outreach|length }} accepted</div>
+  </div>
+
+  <div class="stat-card blue">
+    <div class="stat-top">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      {% if pend_sales > 0 %}
+      <div class="stat-delta neutral pulse-amber">{{ pend_sales }} pending</div>
+      {% else %}
+      <div class="stat-delta up">Clear</div>
+      {% endif %}
+    </div>
+    <div class="stat-value">{{ pend_sales }}</div>
+    <div class="stat-label">Awaiting Review</div>
+    <div class="stat-sub">{{ den_sales }} denied total</div>
+  </div>
+
+  <div class="stat-card green">
+    <div class="stat-top">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <div class="stat-delta up" id="onlineCountBadge">Loading…</div>
+    </div>
+    <div class="stat-value" id="onlineCountVal">—</div>
+    <div class="stat-label">Staff Online</div>
+    <div class="stat-sub" id="totalMembersSub">fetching team…</div>
+  </div>
+</div>
+
+{# ─── MAIN GRID ─── #}
+<div style="display:grid;grid-template-columns:1fr 1fr 360px;gap:16px;align-items:start">
+
+  {# ── ACTIVITY CHART ── #}
+  <div class="card card-gold" style="grid-column:span 2">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        Activity Overview
+      </div>
+      <div class="chart-tabs">
+        <button class="ctab active" onclick="switchChart('sales',this)">Sales</button>
+        <button class="ctab" onclick="switchChart('outreach',this)">Outreach</button>
+        <button class="ctab" onclick="switchChart('all',this)">All Logs</button>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+  </div>
+
+  {# ── BROADCASTS ── #}
+  <div class="card" style="grid-row:span 2">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+        Broadcasts
+      </div>
+      <a href="/manager/sales_manager/broadcasts" class="card-action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>All
+      </a>
+    </div>
+    {% set sales_broadcasts = broadcasts|selectattr('dept_key','in',['sales','all'])|list %}
+    {% if sales_broadcasts %}
+      {% for bc in sales_broadcasts[:4] %}
+      <div class="bc-item">
+        <div class="bc-badge">{{ bc.dept_name or 'SALES' }}</div>
+        <div class="bc-title">{{ bc.title }}</div>
+        <div class="bc-body">{{ bc.content[:90] }}{% if bc.content|length > 90 %}…{% endif %}</div>
+        <div class="bc-time">{{ bc.timestamp }} · {{ bc.author }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+        <h3>No broadcasts</h3><p>Nothing posted yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── TOP PERFORMERS ── #}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        Top Performers
+      </div>
+    </div>
+    {% set ns = namespace(counts={}) %}
+    {% for log in accepted_sales %}
+      {% set u = log.username or 'Unknown' %}
+      {% if u in ns.counts %}{% set _ = ns.counts.update({u: ns.counts[u] + 1}) %}
+      {% else %}{% set _ = ns.counts.update({u: 1}) %}{% endif %}
+    {% endfor %}
+    {% set sorted_performers = ns.counts|dictsort(by='value',reverse=true) %}
+    {% if sorted_performers %}
+      {% for name, count in sorted_performers[:5] %}
+      {% set rank_cls = 'r1' if loop.index == 1 else ('r2' if loop.index == 2 else 'r3') %}
+      <div class="performer-row">
+        <div class="performer-rank {{ rank_cls }}">{{ loop.index }}</div>
+        <div class="performer-pfp-ph">{{ name[0].upper() if name else '?' }}</div>
+        <div class="performer-name">{{ name }}</div>
+        <div class="performer-count">{{ count }} sales</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty" style="padding:20px">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <p>No accepted sales yet.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── TEAM PANEL ── #}
+  <div class="card" style="grid-row:span 3">
+    <div class="team-header">
+      <div class="card-title">
+        <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        Sales Team
+      </div>
+      <span class="online-count">
+        <span class="online-dot"></span>
+        <span id="onlinePillCount">…</span>
+      </span>
+    </div>
+    <div id="teamLoadingState" style="text-align:center;padding:28px 0;color:var(--text3)">
+      <div class="loading-spin"></div>
+      <p style="margin-top:10px;font-size:12px">Loading team…</p>
+    </div>
+    <div class="member-list" id="memberList" style="display:none"></div>
+    <div id="teamErrorState" style="display:none">
+      <div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <h3>Couldn't load team</h3><p>Check bot is running.</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── PENDING REVIEW ── #}
+  <div class="card" style="grid-column:span 2">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-title-icon" style="background:var(--amber-dim);border-color:rgba(245,166,35,.2);color:var(--amber)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span style="color:var(--amber)">Pending Review</span>
+      </div>
+      {% if pending_logs %}<span class="badge amber"><span class="badge-dot"></span>{{ pending_logs|length }} waiting</span>{% endif %}
+    </div>
+    {% if pending_logs %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Staff</th><th>Type</th><th>Details</th><th>Submitted</th><th>Proof</th></tr></thead>
+        <tbody>
+          {% for log in pending_logs[:6] %}
+          {% set ltype = log_type(log.type) %}
+          <tr>
+            <td><div class="td-name"><div class="td-pfp-ph">{{ (log.username or '?')[0].upper() }}</div>{{ log.username or '—' }}</div></td>
+            <td>
+              {% if ltype == 'Sales' %}<span class="type-chip sales">💰 Sales</span>
+              {% elif ltype == 'Outreach' %}<span class="type-chip outreach">📡 Outreach</span>
+              {% else %}<span class="badge accent">{{ log.type }}</span>{% endif %}
+            </td>
+            <td style="max-width:180px">
+              {% if log.details is mapping %}
+                {% if log.details.customer_username %}
+                  <span style="font-size:12px;color:var(--text)">{{ log.details.customer_username }}</span>
+                  {% if log.details.sale_type %}<span style="color:var(--text3);font-size:11px"> · {{ log.details.sale_type }}</span>{% endif %}
+                {% elif log.details.server %}
+                  <span style="font-size:12px;color:var(--text)">{{ log.details.server }}</span>
+                  {% if log.details.outcome %}<span style="color:var(--text3);font-size:11px"> · {{ log.details.outcome }}</span>{% endif %}
+                {% else %}<span class="td-mono" style="color:var(--text3)">{{ log.id }}</span>{% endif %}
+              {% else %}<span class="td-mono" style="color:var(--text3)">{{ log.id }}</span>{% endif %}
+            </td>
+            <td class="td-mono" style="color:var(--text3);font-size:11px">{{ log.timestamp }}</td>
+            <td>
+              {% if log.proof %}<a href="{{ log.proof }}" target="_blank" class="proof-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View</a>
+              {% else %}<span class="no-proof">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pending_logs|length > 6 %}
+    <div style="text-align:center;margin-top:10px">
+      <a href="/manager/sales_manager/logs" class="card-action" style="display:inline-flex">View all {{ pending_logs|length }} pending logs →</a>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3>All clear!</h3><p>No pending logs to review.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>{# END main grid #}
+
+{# ─── FULL LOG TABLE ─── #}
+<div class="card" style="margin-top:16px">
+  <div class="card-header">
+    <div class="card-title">
+      <div class="card-title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      All Sales &amp; Outreach Logs
+    </div>
+    <a href="/manager/sales_manager/logs" class="card-action">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>Full View
+    </a>
+  </div>
+  <div class="log-filter-bar">
+    <button class="filter-btn active" onclick="filterLogs('all',this)">All</button>
+    <button class="filter-btn" onclick="filterLogs('Sales',this)">Sales</button>
+    <button class="filter-btn" onclick="filterLogs('Outreach',this)">Outreach</button>
+    <button class="filter-btn" onclick="filterLogs('Accepted',this)">Accepted</button>
+    <button class="filter-btn" onclick="filterLogs('Pending',this)">Pending</button>
+    <button class="filter-btn" onclick="filterLogs('Denied',this)">Denied</button>
+    <input class="filter-search" type="text" placeholder="Search staff or log ID…" oninput="searchLogs(this.value)"/>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Staff</th><th>Type</th><th>Details</th><th>Status</th><th>Reviewed By</th><th>Date</th><th>Proof</th></tr>
+      </thead>
+      <tbody id="logsTableBody">
+        {% set all_dept_logs = (sales_logs + outreach_logs)|sort(attribute='timestamp',reverse=true) %}
+        {% if all_dept_logs %}
+          {% for log in all_dept_logs[:30] %}
+          {% set ltype = log_type(log.type) %}
+          <tr data-type="{{ ltype }}" data-status="{{ log.status }}"
+              data-search="{{ (log.username or '')|lower }} {{ (log.id or '')|lower }}">
+            <td class="td-mono" style="font-size:11px;color:var(--text3)">{{ log.id[-8:] if log.id else '—' }}</td>
+            <td><div class="td-name"><div class="td-pfp-ph">{{ (log.username or '?')[0].upper() }}</div>{{ log.username or '—' }}</div></td>
+            <td>
+              {% if ltype == 'Sales' %}<span class="type-chip sales">💰 Sales</span>
+              {% elif ltype == 'Outreach' %}<span class="type-chip outreach">📡 Outreach</span>
+              {% else %}<span class="badge accent">{{ ltype }}</span>{% endif %}
+            </td>
+            <td style="max-width:200px;font-size:12px">
+              {% if log.details is mapping %}
+                {% if log.details.customer_username %}{{ log.details.customer_username }}{% if log.details.sale_type %} · <span style="color:var(--text3)">{{ log.details.sale_type }}</span>{% endif %}
+                {% elif log.details.server %}{{ log.details.server }}{% if log.details.outcome %} · <span style="color:var(--text3)">{{ log.details.outcome }}</span>{% endif %}
+                {% else %}—{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% set st = log.status %}
+              {% if st == 'Accepted' %}<span class="badge green"><span class="badge-dot"></span>Accepted</span>
+              {% elif st == 'Pending' %}<span class="badge amber"><span class="badge-dot"></span>Pending</span>
+              {% elif st == 'Denied' %}<span class="badge red"><span class="badge-dot"></span>Denied</span>
+              {% else %}<span class="badge accent">{{ st }}</span>{% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--text2)">{{ log.reviewed_by or '—' }}</td>
+            <td class="td-mono" style="font-size:11px;color:var(--text3)">{{ log.timestamp }}</td>
+            <td>
+              {% if log.proof %}<a href="{{ log.proof }}" target="_blank" class="proof-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View</a>
+              {% else %}<span class="no-proof">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">No logs found for the Sales department.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}{# END content #}
+
+{% block scripts %}
+<script>
+/* ─── CHART ─── */
+(function(){
+  var salesLogs    = {{ (sales_logs    or [])|tojson }};
+  var outreachLogs = {{ (outreach_logs or [])|tojson }};
+
+  function bucketByDay(logs, days){
+    days = days || 7;
+    var now = new Date(), buckets = [], labels = [], i;
+    for(i=0;i<days;i++) buckets.push(0);
+    for(i=days-1;i>=0;i--){
+      var d=new Date(now); d.setDate(d.getDate()-i);
+      labels.push(d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}));
+    }
+    logs.forEach(function(l){
+      if(!l.timestamp) return;
+      var ts=new Date(l.timestamp.replace(' ','T'));
+      var diff=Math.floor((now-ts)/(1000*60*60*24));
+      if(diff>=0&&diff<days) buckets[days-1-diff]++;
+    });
+    return {labels:labels,data:buckets};
+  }
+
+  var sData=bucketByDay(salesLogs), oData=bucketByDay(outreachLogs);
+  var aData={labels:sData.labels,data:sData.data.map(function(v,i){return v+(oData.data[i]||0);})};
+  var sets={
+    sales:    {label:'Sales',    data:sData.data, color:'#f0b429'},
+    outreach: {label:'Outreach', data:oData.data, color:'#a78bfa'},
+    all:      {label:'All Logs', data:aData.data, color:'#4f8ef7'}
+  };
+  var ctx=document.getElementById('activityChart').getContext('2d');
+  var currentKey='sales';
+  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
+  function gc(){return isDark()?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';}
+  function tc(){return isDark()?'#8890ad':'#5a5f7a';}
+
+  function makeChart(key){
+    var d=sets[key];
+    return new Chart(ctx,{
+      type:'bar',
+      data:{labels:sData.labels,datasets:[
+        {label:d.label,data:d.data,backgroundColor:d.color+'33',borderColor:d.color,borderWidth:2,borderRadius:5,borderSkipped:false},
+        {type:'line',label:'Trend',data:d.data,borderColor:d.color,borderWidth:2,tension:.4,pointRadius:3,pointBackgroundColor:d.color,fill:false}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#13151e',borderColor:'#242840',borderWidth:1,titleColor:'#edf0fa',bodyColor:'#8890ad',padding:10,cornerRadius:8}},
+        scales:{
+          x:{grid:{color:gc()},ticks:{color:tc(),font:{size:11}}},
+          y:{grid:{color:gc()},ticks:{color:tc(),font:{size:11},stepSize:1}}
+        }
+      }
+    });
+  }
+
+  var chart=makeChart('sales');
+  window.switchChart=function(key,btn){
+    document.querySelectorAll('.ctab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active'); chart.destroy(); currentKey=key; chart=makeChart(key);
+  };
+  var obs=new MutationObserver(function(){chart.destroy();chart=makeChart(currentKey);});
+  obs.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+
+/* ─── TEAM LOADER ─── */
+function renderMember(m){
+  var i=(m.username||'?')[0].toUpperCase();
+  var pfp=m.pfp?'<img class="member-pfp" src="'+m.pfp+'" onerror="this.outerHTML=\'<div class=member-pfp-ph>'+i+'</div>\'">'
+               :'<div class="member-pfp-ph">'+i+'</div>';
+  var prob=m.probation?'<span class="badge amber member-tag">Probation</span>':'';
+  var last=m.last_login?'Last: '+m.last_login:'Never logged in';
+  return '<div class="member-card">'
+    +'<div class="member-pfp-wrap">'+pfp+'<div class="member-status '+(m.online?'online':'offline')+'"></div></div>'
+    +'<div class="member-info"><div class="member-name">'+(m.nick||m.username)+'</div>'
+    +'<div class="member-meta"><span>'+(m.online?'● Online':'○ Offline')+'</span>'
+    +'<span class="member-meta-sep">·</span><span>'+last+'</span>'
+    +(prob?'<span class="member-meta-sep">·</span>'+prob:'')
+    +'</div></div></div>';
+}
+
+function refreshTeam(){
+  document.getElementById('teamLoadingState').style.display='block';
+  document.getElementById('memberList').style.display='none';
+  document.getElementById('teamErrorState').style.display='none';
+  fetch('/api/dept-members/sales')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      document.getElementById('teamLoadingState').style.display='none';
+      if(data.status!=='ok') throw new Error('api');
+      var members=data.members||[];
+      var online=members.filter(function(m){return m.online;}).length;
+      var total=members.length;
+      document.getElementById('onlineCountVal').textContent=online;
+      document.getElementById('onlineCountBadge').textContent=online+'/'+total;
+      document.getElementById('totalMembersSub').textContent=total+' total members';
+      document.getElementById('onlinePillCount').textContent=online+' online';
+      var list=document.getElementById('memberList');
+      list.innerHTML=members.length?members.map(renderMember).join('')
+        :'<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5"/><circle cx="9" cy="7" r="4"/></svg></div><p>No members found.</p></div>';
+      list.style.display='flex';
+    })
+    .catch(function(){
+      document.getElementById('teamLoadingState').style.display='none';
+      document.getElementById('teamErrorState').style.display='block';
+      document.getElementById('onlineCountVal').textContent='Err';
+    });
+}
+
+/* ─── LOG FILTER ─── */
+var currentFilter='all', currentSearch='';
+function applyLogFilters(){
+  document.querySelectorAll('#logsTableBody tr[data-type]').forEach(function(row){
+    var type=row.dataset.type||'', status=row.dataset.status||'', search=row.dataset.search||'';
+    var show=true;
+    if(currentFilter!=='all'){
+      show=(currentFilter==='Sales'||currentFilter==='Outreach')?(type===currentFilter):(status===currentFilter);
+    }
+    if(currentSearch&&!search.includes(currentSearch.toLowerCase())) show=false;
+    row.style.display=show?'':'none';
+  });
+}
+function filterLogs(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active'); applyLogFilters();
+}
+function searchLogs(v){ currentSearch=v.trim(); applyLogFilters(); }
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded',refreshTeam);
+setInterval(refreshTeam,60000);
+</script>
+{% endblock %}

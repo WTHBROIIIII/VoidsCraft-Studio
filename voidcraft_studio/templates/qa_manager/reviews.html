@@ -1,0 +1,304 @@
+{% extends "qa_manager/base_qa.html" %}
+{% set page = 'reviews' %}
+{% block title %}Asset Reviews{% endblock %}
+{% block tab_reviews %}active{% endblock %}
+{% block breadcrumb %}ASSET REVIEWS{% endblock %}
+
+{% set all_reviews = broadcasts | selectattr('dept_key','in',['qa','all']) | list %}
+
+{% block head %}
+{{ super() }}
+<style>
+.reviews-layout{display:grid;grid-template-columns:380px 1fr;gap:22px}
+@media(max-width:1050px){.reviews-layout{grid-template-columns:1fr}}
+
+.review-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r3);padding:18px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s,transform .2s;position:relative;overflow:hidden}
+.review-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.review-card.s-open::before{background:var(--qa)}
+.review-card.s-pass::before{background:var(--green)}
+.review-card.s-fail::before{background:var(--red)}
+.review-card.s-review::before{background:var(--amber)}
+.review-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+
+.rv-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-left:8px}
+.rv-title{font-size:14px;font-weight:700;color:var(--text);font-family:var(--display);line-height:1.3}
+.rv-desc{font-size:12.5px;color:var(--text2);line-height:1.65;padding-left:8px}
+.rv-type-row{display:flex;gap:6px;flex-wrap:wrap;padding-left:8px}
+.rv-tag{font-size:9.5px;font-family:var(--mono);padding:2px 8px;border-radius:3px;background:var(--qa-dim);color:var(--qa);border:1px solid rgba(249,115,22,0.25)}
+.rv-footer{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono);padding-left:8px;flex-wrap:wrap;gap:6px;border-top:1px solid var(--border);padding-top:10px;margin-top:2px}
+.rv-actions{display:flex;gap:6px}
+.rv-grid{display:flex;flex-direction:column;gap:14px}
+
+.prod-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s;border-left:3px solid var(--qa)}
+.prod-card:hover{border-color:var(--border2)}
+.prod-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.prod-title{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.3}
+.prod-desc{font-size:12px;color:var(--text2);line-height:1.6}
+.prod-link{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--qa);text-decoration:none;padding:4px 10px;background:var(--qa-dim);border:1px solid rgba(249,115,22,0.25);border-radius:var(--r);transition:all .15s}
+.prod-link:hover{background:rgba(249,115,22,0.2)}
+.prod-link svg{width:11px;height:11px;flex-shrink:0}
+.prod-footer{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono);flex-wrap:wrap;gap:6px}
+
+.search-wrap{position:relative;margin-bottom:14px}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3);pointer-events:none}
+.search-input{width:100%;background:var(--input);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px 8px 34px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--qa)}
+
+.board-count{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px}
+.board-count span{color:var(--qa);font-weight:600}
+
+.page-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.page-tab{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text3);font-family:var(--font);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.page-tab:hover{color:var(--text2)}
+.page-tab.active{color:var(--qa);border-bottom-color:var(--qa)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <div class="page-eyebrow">Quality Assurance Portal</div>
+    <div class="page-title">Asset <span>Reviews</span></div>
+    <div class="page-sub">Open new assets for QA review and announce product reviews to your team.</div>
+  </div>
+  <div class="page-actions">
+    <span class="badge qa">{{ all_reviews|length }} items</span>
+  </div>
+</div>
+
+{# ── PAGE TABS ── #}
+<div class="page-tabs">
+  <button class="page-tab active" onclick="switchPageTab('assets',this)">
+    <svg style="width:13px;height:13px;display:inline;margin-right:5px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg>
+    Open Asset Reviews
+  </button>
+  <button class="page-tab" onclick="switchPageTab('products',this)">
+    <svg style="width:13px;height:13px;display:inline;margin-right:5px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Product Reviews
+  </button>
+</div>
+
+{# ── ASSET REVIEWS TAB ── #}
+<div id="tab-assets" class="tab-panel active">
+  <div class="reviews-layout">
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card card-qa">
+        <div class="card-header">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Open New Asset Review
+          </div>
+        </div>
+        <form action="/api/create-announcement" method="POST">
+          <input type="hidden" name="department_id" value="qa"/>
+          <div class="form-group">
+            <label class="form-label">Asset / Item Name</label>
+            <input type="text" name="title" class="form-input" placeholder="e.g. Sword of Voidcraft v2" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asset Type</label>
+            <select name="asset_type" class="form-select">
+              <option value="Model">3D Model</option>
+              <option value="Script">Script / Plugin</option>
+              <option value="UI">UI / Interface</option>
+              <option value="Audio">Audio</option>
+              <option value="Texture">Texture / Image</option>
+              <option value="Game">Game / Experience</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Review Notes</label>
+            <textarea name="content" class="form-textarea" rows="4" placeholder="Describe what needs to be reviewed, known issues, test criteria…" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asset Link (optional)</label>
+            <input type="url" name="asset_link" class="form-input" placeholder="https://…"/>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:4px">
+            <button type="submit" class="btn btn-qa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Open for Review
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="margin-bottom:12px">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            Review Stats
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px">
+          <span style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--qa);display:inline-block"></span>Total Opened
+          </span>
+          <span style="font-family:var(--mono);color:var(--qa)">{{ all_reviews|length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/></svg>
+          Review Board
+        </div>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="rvSearch" type="text" placeholder="Search assets…" oninput="filterReviews()"/>
+      </div>
+      <div class="board-count">Showing <span id="rvShown">{{ all_reviews|length }}</span> item{{ 's' if all_reviews|length != 1 else '' }}</div>
+      <div class="rv-grid" id="rvGrid">
+        {% if all_reviews %}
+          {% for b in all_reviews %}
+          <div class="review-card s-open" data-title="{{ b.title|lower }}" data-content="{{ b.content|lower }}">
+            <div class="rv-top">
+              <div class="rv-title">{{ b.title }}</div>
+              <span class="badge qa"><span class="badge-dot"></span>Open</span>
+            </div>
+            <div class="rv-desc">{{ b.content }}</div>
+            <div class="rv-type-row">
+              <span class="rv-tag">QA</span>
+              {% if b.timestamp %}<span class="rv-tag">{{ b.timestamp[:10] }}</span>{% endif %}
+            </div>
+            <div class="rv-footer">
+              <span>Opened by {{ b.author or 'Manager' }} · {{ b.timestamp or '—' }}</span>
+              <div class="rv-actions">
+                <a href="/manager/qa_manager/delete-broadcast/{{ b.id }}" onclick="return confirm('Close this review?')" class="btn btn-danger btn-xs">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Close
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty">
+            <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/></svg></div>
+            <h3>No open reviews</h3>
+            <p>Open your first asset review using the form.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{# ── PRODUCT REVIEWS TAB ── #}
+<div id="tab-products" class="tab-panel">
+  <div class="reviews-layout">
+
+    <div class="card card-qa">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Announce Product Review
+        </div>
+      </div>
+      <form action="/api/create-announcement" method="POST">
+        <input type="hidden" name="department_id" value="qa"/>
+        <div class="form-group">
+          <label class="form-label">Product Name</label>
+          <input type="text" name="title" class="form-input" placeholder="e.g. VoidCraft Gamepass v3" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Review Instructions</label>
+          <textarea name="content" class="form-textarea" rows="4" placeholder="What your staff should look for, test criteria, known issues…" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Product / Review Link</label>
+          <input type="url" name="product_link" class="form-input" placeholder="https://www.roblox.com/…" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due Date</label>
+          <input type="date" name="deadline" class="form-input"/>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px">
+          <button type="submit" class="btn btn-qa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Announce to QA Team
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Product Review History
+        </div>
+        <span class="badge qa">{{ all_reviews|length }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        {% if all_reviews %}
+          {% for b in all_reviews %}
+          <div class="prod-card">
+            <div class="prod-top">
+              <div class="prod-title">{{ b.title }}</div>
+              <span class="badge qa">QA</span>
+            </div>
+            <div class="prod-desc">{{ b.content }}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <a href="#" class="prod-link" target="_blank">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open Product Link
+              </a>
+            </div>
+            <div class="prod-footer">
+              <span>Announced by {{ b.author or 'Manager' }} · {{ b.timestamp or '—' }}</span>
+              <a href="/manager/qa_manager/delete-broadcast/{{ b.id }}" onclick="return confirm('Remove this product review?')" class="btn btn-danger btn-xs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>Remove
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty">
+            <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>
+            <h3>No product reviews yet</h3>
+            <p>Announce your first product review using the form.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchPageTab(name,btn){
+  document.querySelectorAll('.page-tab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function filterReviews(){
+  var q=(document.getElementById('rvSearch').value||'').toLowerCase();
+  var cards=document.querySelectorAll('#rvGrid .review-card');
+  var shown=0;
+  cards.forEach(function(c){
+    var m=!q||(c.dataset.title||'').includes(q)||(c.dataset.content||'').includes(q);
+    c.style.display=m?'':'none';
+    if(m)shown++;
+  });
+  document.getElementById('rvShown').textContent=shown;
+}
+(function(){
+  if(window.location.search.includes('sent=1')){
+    showToast('Posted successfully!','success');
+    history.replaceState(null,'',window.location.pathname);
+  }
+})();
+</script>
+{% endblock %}

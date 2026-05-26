@@ -1,0 +1,244 @@
+{% extends "qa/base_qa.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block tab_dash %}active{% endblock %}
+
+{% block head %}
+<style>
+.step-item{display:flex;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;font-family:var(--mono)}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.step-body{font-size:12px;color:var(--text2);line-height:1.5}
+.step-body a{color:var(--accent);text-decoration:none}
+.step-body a:hover{text-decoration:underline}
+.punish-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.punish-card{border-radius:var(--r);padding:14px}
+.quota-big{font-size:48px;font-weight:700;font-family:var(--mono);color:var(--accent);line-height:1}
+.warn-box{background:var(--red-dim);border:1px solid rgba(240,90,90,.3);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--red);display:flex;gap:8px;align-items:flex-start}
+.warn-box svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+.criteria-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)}
+.criteria-item:last-child{border-bottom:none}
+.criteria-item::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set prob = probation %}
+<div class="welcome">
+  <h1>Welcome, {{ username }} 🔬</h1>
+  <p>Quality Assurance Operations — Product review, voting, and quota tracking.</p>
+</div>
+
+<div class="main-grid">
+  <div class="col-left">
+
+    <!-- QUOTA -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Quota — 30 Points Required
+        {% if prob %}<span class="badge amber" style="margin-left:auto">Probation −30%</span>{% endif %}
+      </div>
+
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
+        <div>
+          <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:4px">Points Quota</div>
+          <div class="quota-big">30</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Points required per period</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:2px">Base Pay</div>
+              <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--accent)">{% if prob %}210R${% else %}300R${% endif %}</div>
+            </div>
+            <div style="font-size:11px;color:var(--text2)">{% if prob %}std: 300R${% else %}per period{% endif %}</div>
+          </div>
+          <div class="card2" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:2px">Review Deadline</div>
+              <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--amber)">72h</div>
+            </div>
+            <div style="font-size:11px;color:var(--text2)">Per product</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-box" style="margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Pay is deducted <strong>20%</strong> for every product you fail to review within the <strong>72-hour timeframe</strong>.</span>
+      </div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Quota Punishment Scale (if not on LOA):</div>
+      <div class="punish-grid">
+        <div class="punish-card" style="background:var(--red-dim);border:1px solid rgba(240,90,90,.3)">
+          <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--red);margin-bottom:6px">0 – 10 Points</div>
+          <div style="font-size:16px;font-weight:700;color:var(--red);font-family:var(--mono);margin-bottom:4px">100% Pay Deduction</div>
+          <div style="font-size:11px;color:var(--red);opacity:.8">+ A formal warning issued</div>
+        </div>
+        <div class="punish-card" style="background:var(--amber-dim);border:1px solid rgba(245,166,35,.3)">
+          <div style="font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:6px">11 – 19 Points</div>
+          <div style="font-size:16px;font-weight:700;color:var(--amber);font-family:var(--mono);margin-bottom:4px">50% Pay Deduction</div>
+          <div style="font-size:11px;color:var(--amber);opacity:.8">+ A formal warning issued</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);font-size:11px;color:var(--text2)">
+        Points are awarded by the QA Manager using the <a href="https://docs.google.com/spreadsheets/d/1Ggt3QVvxgnBW9FUVqJWsAtvJhrNbQgT8VPkxke5JVX8/edit?usp=sharing" target="_blank" style="color:var(--accent)">scoring rubric</a> after each deadline. Being on LOA exempts you from punishments.
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        How the Review Process Works
+      </div>
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Developer Submits via Form</div>
+          <div class="step-body">A developer submits their product using the <a href="https://docs.google.com/forms/d/e/1FAIpQLSec9ry7X6jmEgDXHNuF_pIz2ArqEKGQixWt6myzmF66V2-aJg/viewform" target="_blank">Product Submission Form</a>. This triggers the entire QA process automatically.</div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Discord Announcement Posted</div>
+          <div class="step-body">A Discord announcement is posted in the <a href="https://discord.com/channels/1341845115949420584/1342569151272587375" target="_blank">product announcements channel</a> informing everyone that a thread will open for voting.</div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Product Added to Tracker</div>
+          <div class="step-body">A new row is added to the <a href="https://docs.google.com/spreadsheets/d/12ar_wn3nJmruz1MjFVNuM69OK8AOR6WCM6lP3pu7GFI/edit?usp=sharing" target="_blank">Product Tracker</a> for easy access. QA Manager+ can update the status when voting ends.</div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">You Review & Vote</div>
+          <div class="step-body">You will be pinged in the <a href="https://discord.com/channels/1341845115949420584/1385060344791040152" target="_blank">Product Discussions Channel</a>. Share your feedback and vote on whether the product is ready. Use the checklist provided.</div>
+        </div>
+      </div>
+      <div class="step-item" style="border-color:rgba(52,211,153,.25)">
+        <div class="step-num" style="background:var(--accent-dim);border-color:var(--accent);color:var(--accent)">5</div>
+        <div>
+          <div class="step-title">Accepted → Accepted Products List</div>
+          <div class="step-body">Accepted products are added to the <a href="https://docs.google.com/spreadsheets/d/11oXO_xri4Nnu6_Ukmu1Bc_OO7CAbiruVEtmDXPv21Xg/edit?usp=sharing" target="_blank">Accepted Products Tracker</a> so all staff can assist Customer Support agents who need to reach the developer.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOUR TASKS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Your Responsibilities & General Criteria
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        You are responsible for reviewing and voting on new products. You will be notified in the <a href="https://discord.com/channels/1341845115949420584/1385060344791040152" target="_blank" style="color:var(--accent)">Product Discussions Channel</a> whenever there is a new product. Give your feedback in the channel pinged for that product. Use the checklist provided.
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">General Product Criteria — every product must have:</div>
+      <div class="criteria-item">A clear, detailed set of instructions on how to properly set up the product.</div>
+      <div class="criteria-item">Product must be easy to set up — instructions must be clear and unambiguous.</div>
+      <div class="criteria-item">All received products should look <a href="https://media.discordapp.net/attachments/1342566728894386298/1394445752448712734/Screenshot_2025-07-13_155244.png" target="_blank" style="color:var(--accent)">like this example</a> when viewed from the explorer in Roblox Studio.</div>
+      <div class="criteria-item">For safety — the product file link may ONLY be found in the product announcement or the Main Product Tracker. Do not share it elsewhere.</div>
+    </div>
+
+  </div><!-- /col-left -->
+
+  <div class="col-right">
+
+    <!-- QUICK LINKS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        Quick Links
+      </div>
+      <a href="https://docs.google.com/spreadsheets/d/12ar_wn3nJmruz1MjFVNuM69OK8AOR6WCM6lP3pu7GFI/edit?usp=sharing" target="_blank" class="ext-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div><div class="ext-link-title">Product Tracker (QA Only)</div><div class="ext-link-sub">Current products under review</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/11oXO_xri4Nnu6_Ukmu1Bc_OO7CAbiruVEtmDXPu21Xg/edit?usp=sharing" target="_blank" class="ext-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+        <div><div class="ext-link-title">Accepted Products Tracker</div><div class="ext-link-sub">All approved products</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSec9ry7X6jmEgDXHNuF_pIz2ArqEKGQixWt6myzmF66V2-aJg/viewform" target="_blank" class="ext-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <div><div class="ext-link-title">Product Submission Form</div><div class="ext-link-sub">For developers submitting products</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1Ggt3QVvxgnBW9FUVqJWsAtvJhrNbQgT8VPkxke5JVX8/edit?usp=sharing" target="_blank" class="ext-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div><div class="ext-link-title">Scoring Rubric</div><div class="ext-link-sub">Points assigned by QA Manager</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:var(--text3);flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    </div>
+
+    <!-- BROADCASTS -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Targeted Broadcasts
+      </div>
+      {% if broadcasts %}
+        {% for b in broadcasts[:4] %}
+        <div class="bc-item">
+          <div class="bc-dept">{{ b.dept_name or 'All Depts' }}</div>
+          <div class="bc-title">{{ b.title }}</div>
+          <div class="bc-body">{{ b.content }}</div>
+          <div class="bc-time">{{ b.author or 'Admin' }} · {{ b.timestamp }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><p>No active broadcasts</p></div>
+      {% endif %}
+    </div>
+
+    <!-- JOB DIRECTIVES -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Active Job Directives
+      </div>
+      {% if directives %}
+        {% for job in directives[:4] %}
+        <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">{{ job.title }}</div>
+            <span class="badge {% if job.priority=='High' %}red{% elif job.priority=='Medium' %}amber{% else %}green{% endif %}">{{ job.priority }}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">{{ job.content }}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">📅 {{ job.deadline or '—' }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty" style="padding:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;opacity:.3;display:block;margin:0 auto 6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><p>No directives</p></div>
+      {% endif %}
+    </div>
+
+    <!-- DISCORD PROFILE -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 71 55" fill="currentColor" style="width:16px;height:16px;color:var(--accent)"><path d="M60.105 4.898A58.55 58.55 0 0045.803.694a40.674 40.674 0 00-1.797 3.692 54.19 54.19 0 00-16.208 0A40.64 40.64 0 0026 .694 58.565 58.565 0 0011.685 4.91C1.687 19.736-1.031 34.18.324 48.423a58.692 58.692 0 0017.9 9.056 44.204 44.204 0 003.786-6.163 38.305 38.305 0 01-5.96-2.868c.5-.366.988-.746 1.462-1.126 11.483 5.288 23.92 5.288 35.265 0 .478.38.965.76 1.462 1.126a38.24 38.24 0 01-5.965 2.871 44.095 44.095 0 003.786 6.163 58.582 58.582 0 0017.909-9.056c1.681-17.567-2.866-31.867-12.054-43.528zM23.725 39.5c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.003 3.956-2.826 7.17-6.38 7.17zm23.55 0c-3.498 0-6.38-3.214-6.38-7.17 0-3.954 2.822-7.172 6.38-7.172 3.557 0 6.438 3.218 6.38 7.172-.002 3.956-2.825 7.17-6.38 7.17z"/></svg>
+        Discord Profile
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r)">
+        {% if pfp %}<img src="{{ pfp }}" style="width:46px;height:46px;border-radius:50%;border:2px solid var(--accent)" alt="pfp"/>
+        {% else %}<div style="width:46px;height:46px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--accent)">{{ (username or 'Q')[0].upper() }}</div>{% endif %}
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">{{ username }}</div>
+          <div style="font-size:11px;color:var(--text2);font-family:var(--mono)">ID: {{ uid }}</div>
+          <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap">
+            <span class="badge accent"><span class="badge-dot"></span>QA</span>
+            {% if probation %}<span class="badge amber"><span class="badge-dot"></span>Probation</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
