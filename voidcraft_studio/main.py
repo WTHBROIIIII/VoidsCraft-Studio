@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/app.py << 'PYEOF'
 from flask import (Flask, render_template, render_template_string,
                    request, redirect, url_for, session, abort, jsonify)
 import requests, requests.adapters, ssl, time, json, threading, urllib3, traceback
