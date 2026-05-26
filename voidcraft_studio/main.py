@@ -1,3 +1,4 @@
+cat > /mnt/user-data/outputs/app.py << 'PYEOF'
 from flask import (Flask, render_template, render_template_string,
                    request, redirect, url_for, session, abort, jsonify)
 import requests, requests.adapters, ssl, time, json, threading, urllib3, traceback
@@ -44,6 +45,9 @@ CLIENT_SECRET        = "1n64oAOmAzEhN9haKrx8k88_k-UogatB"
 ROLE_ADMIN           = "1474517059143729234"
 ROLE_PROBATION       = "1474517059143729235"
 BOT_BRIDGE_URL       = "http://127.0.0.1:6000/post-review"
+
+OAUTH_REDIRECT_URI   = "https://voids-craft-studio.vercel.app/"
+OAUTH_SCOPES         = "identify gdm.join guilds messages.read rpc.video.read rpc activities.write rpc.voice.read guilds.channels.read guilds.join connections"
 
 DEPT_TO_ROLE = {
     "investigation":"1342014734156959804",
@@ -1000,7 +1004,7 @@ def callback():
     try:
         td=_post("https://discord.com/api/oauth2/token",data={
             "client_id":CLIENT_ID,"client_secret":CLIENT_SECRET,"grant_type":"authorization_code",
-            "code":code,"redirect_uri":"http://127.0.0.1:5000/callback","scope":"identify guilds.members.read"
+            "code":code,"redirect_uri":OAUTH_REDIRECT_URI,"scope":OAUTH_SCOPES
         }).json()
     except Exception as e: return f"OAuth token error: {e}",500
     at=td.get("access_token")
